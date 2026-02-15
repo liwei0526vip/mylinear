@@ -2,7 +2,7 @@
 
 ## 概述
 
-基于 [路线图.md](路线图.md) 中 103 项功能的 5 阶段规划，使用 OpenSpec SDD（Spec-Driven Development）工作流组织开发。全部功能划分为 **42 个 change**。
+基于 [路线图.md](路线图.md) 中 104 项功能的 5 阶段规划，使用 OpenSpec SDD（Spec-Driven Development）工作流组织开发。全部功能划分为 **42 个 change**。
 
 ### OpenSpec 标准工作流
 
@@ -72,8 +72,8 @@ graph TD
     C01[C01 项目脚手架与基础设施] --> C02[C02 数据模型与数据库]
     C02 --> C03[C03 用户认证与权限]
     C03 --> C04[C04 Workspace 与 Teams]
-    C04 --> C05[C05 Issue 核心 CRUD]
     C04 --> C06[C06 工作流状态与标签]
+    C06 --> C05[C05 Issue 核心 CRUD]
     C05 --> C07[C07 Projects 管理]
     C05 --> C08[C08 评论与活动流]
     C08 --> C09[C09 通知系统]
@@ -82,6 +82,9 @@ graph TD
     C07 --> C12[C12 Project 视图]
     C09 --> C13[C13 通知收件箱与集成]
 ```
+
+> [!NOTE]
+> C05 依赖 C06 是因为 Issue 需要关联 WorkflowState。C06 和 C05 可并行开发（C05 先 mock 状态），但最终集成需要 C06 完成。
 
 ### Change 清单
 
@@ -114,8 +117,9 @@ graph TD
 | 依赖 | C01 |
 
 **范围：**
-- 15 张核心表 DDL 设计（UUID 主键）
-- `issue_status_history` 表
+- 18 张表 DDL 设计（UUID 主键）
+  - **核心业务表（15 张）**：Workspace, Team, User, TeamMember, Issue, IssueRelation, WorkflowState, Project, Milestone, Cycle, Label, Comment, Attachment, Document, Notification
+  - **辅助表（3 张）**：`issue_closure`（闭包表）、`issue_status_history`（状态历史）、`workflow_transition`（转换规则）
 - `position FLOAT` 字段设计
 - 索引设计（Issue 表核心索引）
 - 数据库迁移工具集成（golang-migrate 或 GORM AutoMigrate）
@@ -139,13 +143,15 @@ graph TD
 - 认证中间件
 - Admin / Member 角色权限模型
 - 权限中间件
+- 用户 Profile API（头像上传、邮箱修改、全名/用户名设置）
 
 **范围（前端）：**
 - 登录/注册页面 UI
 - JWT 存储与自动刷新
 - 路由守卫（未登录重定向）
+- 用户 Profile 设置页（头像、邮箱、全名、用户名、工作区访问管理）
 
-**对应路线图功能项：** #86, #90
+**对应路线图功能项：** #86, #87, #91
 
 ---
 
@@ -167,7 +173,7 @@ graph TD
 - Teams 管理页面
 - 团队成员管理 UI
 
-**对应路线图功能项：** #87, #88, #89
+**对应路线图功能项：** #88, #89, #90
 
 ---
 
@@ -416,13 +422,18 @@ graph TD
 | 依赖 | Phase 1 完成 |
 
 **范围：**
-- 闭包表 (Closure Table) 设计与实现
-- 父子 Issue 关系 CRUD
-- Parent + Sub-Issues 自动完成联动
-- Issue Relations（Blocked by / Blocking / Related / Duplicate）
+- 闭包表 (`issue_closure`) 设计与实现
+- **父子 Issue 关系（#36）**：独立的 Issue 实体，通过 `parent_id` 和闭包表关联，支持层级展示和自动联动
+- **子任务 TODO 清单（#35）**：内嵌于 Issue 描述中的 Markdown TODO 列表，支持勾选完成（纯前端实现）
+- Issue Relations（#37）：Blocked by / Blocking / Related / Duplicate
 - 前端：Issue 详情中的子任务列表与关系展示
 
 **对应路线图功能项：** #35, #36, #37
+
+> [!NOTE]
+> #35（子任务 TODO 清单）和 #36（父子 Issue 关系）是两种不同的子任务模式：
+> - **TODO 清单**：轻量级，内嵌在 Issue 描述中，适合快速拆解小任务
+> - **父子 Issue**：重量级，每个子任务是独立 Issue，有独立的状态/负责人，适合需要独立追踪的任务
 
 ---
 
@@ -511,7 +522,7 @@ graph TD
 
 **范围：**
 - MinIO 文件上传 API（presigned URL）
-- 附件模型（关联 Issue/Comment）
+- `Attachment` 表模型（已在 C02 定义，关联 Issue/Comment）
 - 图片拖拽上传
 - 前端：附件列表、上传组件、图片预览
 
@@ -564,12 +575,16 @@ graph TD
 
 **范围：**
 - Cmd+K 命令面板（模糊搜索 + 分组命令）
+- **全局搜索**：Issue / Project / Team / User 快速查找（基于 PostgreSQL 全文搜索）
 - 全局快捷键系统
 - Issue 快捷键（C/E/A/L/P/S/Y）
 - 列表视图快捷键（J/K 导航、X 选中、F 过滤）
 - 时区设置
 
 **对应路线图功能项：** #63, #64, #92
+
+> [!NOTE]
+> 全局搜索在 MVP 阶段使用 PostgreSQL 全文搜索（`tsvector` + GIN 索引）即可满足需求。如需更高级的搜索（如模糊匹配、拼音搜索、权重排序），可在后续 Phase 集成 Elasticsearch 或 Meilisearch。
 
 ---
 
@@ -950,9 +965,12 @@ graph TD
 **范围：**
 - 深色/浅色主题（CSS 变量切换）
 - 响应式移动端（< 640px 单栏 / 640-1024px 双栏 / > 1024px 三栏）
-- 角色增强：Team Owner、Workspace Owner
+- Workspace Owner 角色（工作区最高权限）
 
-**对应路线图功能项：** #66, #67, #93, #102
+**对应路线图功能项：** #66, #67, #102
+
+> [!NOTE]
+> Team Owner 角色已在 C23（Phase 2）中实现。本 change 仅增加 Workspace Owner 角色。
 
 ---
 
@@ -1096,12 +1114,12 @@ gantt
 
 | 阶段 | 目标 | Change 数 | 预估时长 | 功能项数 |
 |------|------|:---------:|:--------:|:--------:|
-| Phase 1 | MVP 核心 | 13 | ~3 个月 | 31 |
+| Phase 1 | MVP 核心 | 13 | ~3 个月 | 32 |
 | Phase 2 | 迭代管理增强 | 10 | ~2.5 个月 | 26 |
 | Phase 3 | 协作与集成 | 9 | ~2.5 个月 | 19 |
 | Phase 4 | 高级功能 | 7 | ~2.5 个月 | 19 |
 | Phase 5 | 持续演进 | 3 | ~6 个月 | 8 |
-| **总计** | | **42** | **~16.5 个月** | **103** |
+| **总计** | | **42** | **~16.5 个月** | **104** |
 
 ### 全局依赖链
 
@@ -1135,6 +1153,11 @@ gantt
 
 ---
 
-> **文档版本**：v1.0
+> **文档版本**：v1.2
 > **最后更新**：2026年2月15日
-> **Change 总计**：42 个（覆盖路线图全部 103 项功能）
+> **Change 总计**：42 个（覆盖路线图全部 104 项功能）
+>
+> **修订记录**：
+> - v1.2 (2026-02-15)：新增 Profile 功能到 C03（头像、邮箱、全名、用户名管理），更新功能项编号和统计
+> - v1.1 (2026-02-15)：明确 C02 表数量（15→18 张）、修正 C05 依赖关系、明确 #35/#36 区分、补充全局搜索到 C22、补充 Attachment 表说明
+> - v1.0 (2026-02-15)：初始版本
