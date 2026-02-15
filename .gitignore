@@ -1,0 +1,50 @@
+# =============================================================================
+# MyLinear .gitignore
+# =============================================================================
+
+# ----- OS -----
+.DS_Store
+Thumbs.db
+
+# ----- Go 后端 -----
+server/bin/
+server/tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# ----- React 前端 -----
+web/node_modules/
+web/dist/
+web/.vite/
+*.local
+
+# ----- IDE -----
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ----- 环境配置 -----
+.env
+.env.local
+.env.*.local
+
+# ----- Docker 数据卷 -----
+data/
+volumes/
+
+# ----- 日志 -----
+*.log
+logs/
+
+# ----- AI Agent -----
+.claude/
+.agent/
+

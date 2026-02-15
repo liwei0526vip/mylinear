@@ -1,0 +1,94 @@
+schema: spec-driven
+
+# =============================================================================
+# MyLinear — OpenSpec 项目配置
+# =============================================================================
+
+# 项目上下文（所有产出物生成时都会注入此信息）
+context: |
+  ## 项目信息
+  - 项目名称：MyLinear
+  - 产品定位：对标 Linear 的项目管理工具，面向公司内部软件团队
+  - 部署方式：Docker Compose 私有部署
+  - 许可证：MIT
+  - 开发计划：详见 docs/openspec-plan.md（42 个 change，5 个阶段）
+
+  ## 技术栈
+  - 后端：Go 1.24+ / Gin / REST API / GORM 或 sqlc
+  - 前端：React + Vite + TypeScript / shadcn/ui (Radix UI) / Zustand
+  - 数据库：PostgreSQL 16（UUID 主键）
+  - 缓存：Redis 7
+  - 文件存储：MinIO (S3 兼容)
+  - 实时通信：gorilla/websocket
+  - 反向代理：Caddy
+  - 部署：Docker Compose
+
+  ## 项目结构
+  - server/：Go 后端（cmd/ + internal/handler,service,store,model + migrations/）
+  - web/：React 前端（src/components,pages,stores,api,lib）
+  - openspec/：OpenSpec SDD 工作目录
+  - docs/：产品文档（路线图、竞品分析、执行计划）
+
+  ## 开发规范
+  - 全程使用中文进行思考和输出
+  - 遵循项目宪法 constitution.md（简单性原则、测试先行、明确性原则）
+  - Go 后端：标准项目布局、显式错误处理、禁止全局变量、表格驱动测试
+  - React 前端：函数式组件 + Hooks、Zustand 状态管理、shadcn/ui 组件
+  - API 路径格式：/api/v1/<resource>
+  - 数据库变更必须通过迁移文件
+  - Git Commit：Conventional Commits 格式，中文内容
+
+  ## 核心领域概念
+  - Workspace：工作区，顶层组织单元
+  - Team：团队，拥有标识符（key）用于生成 Issue ID（如 ENG-123）
+  - Issue：工作项，核心实体，关联状态/优先级/负责人/标签/截止日期/Project
+  - WorkflowState：工作流状态，5 种类型（backlog/unstarted/started/completed/cancelled）
+  - Project：项目，关联多个 Issue，跟踪进度
+  - Cycle：迭代周期（Sprint），Phase 2 引入
+  - Label：标签，支持工作区级和团队级
+
+  ## 参考文档
+  需求和设计的详细内容参考 docs/竞品分析/ 目录下的竞品分析文档：
+  - 02-功能模块.md：完整功能清单与交互细节
+  - 05-数据模型设计.md：表结构、字段、关联关系参考
+  - 06-GraphQL-API设计.md：API 设计模式参考（本项目用 REST，但数据结构可参考）
+  - 07-状态机流转规则.md：工作流状态类型与转换约束
+  - 08-Local-First同步机制.md：本地优先架构与同步策略（Phase 5 方向，但影响早期数据模型设计）
+  - 09-权限矩阵.md：角色权限设计参考
+  - 11-UI-UX设计规范.md：三栏布局、状态图标、颜色体系等 UI 规范
+  - 12-Webhook与集成.md：Webhook 事件类型与集成模式
+  - 14-键盘快捷键.md：快捷键映射参考
+
+# 产出物规则（仅在对应产出物生成时注入）
+rules:
+  proposal:
+    - 必须包含 Intent（意图）、Scope（范围，含 In scope 和 Out of scope）、Approach（方案概述）三个部分
+    - Scope 中要明确标注对应路线图的功能项编号（如 #27, #28）
+    - 必须说明此 change 与前置依赖 change 的关系
+    - 使用中文撰写
+
+  specs:
+    - 使用 GIVEN/WHEN/THEN 格式编写场景
+    - 使用 RFC 2119 关键词标注需求强度（MUST/SHALL/SHOULD/MAY）
+    - 按领域组织 Delta Specs 目录结构（如 specs/auth/spec.md、specs/issues/spec.md）
+    - 使用 ADDED/MODIFIED/REMOVED 标记变更类型
+    - 每个 Requirement 至少包含正向场景和异常场景
+    - 参考 docs/竞品分析/ 中的相关文档获取功能细节和边界条件（特别是 02-功能模块.md 和 07-状态机流转规则.md）
+    - 使用中文撰写
+
+  design:
+    - 必须包含 Technical Approach（技术方案）和 Architecture Decisions（架构决策）
+    - 每个关键决策需说明选择理由和替代方案
+    - 包含数据模型变更说明（如有涉及表结构），参考 docs/竞品分析/05-数据模型设计.md
+    - 包含 API 端点设计（如有涉及新接口），参考 docs/竞品分析/06-GraphQL-API设计.md 的数据结构
+    - UI 设计决策参考 docs/竞品分析/11-UI-UX设计规范.md
+    - 标注已知风险和缓解措施
+    - 使用中文撰写
+
+  tasks:
+    - 使用分组编号（如 1.1, 1.2, 2.1 ...）
+    - 遵循 TDD 顺序：先写测试、再写实现
+    - 每个任务应在 2 小时内可完成
+    - Go 后端测试采用表格驱动测试风格
+    - 前端任务需包含组件开发和 API 对接
+    - 使用中文撰写
