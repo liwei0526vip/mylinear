@@ -3,11 +3,12 @@
  */
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { User } from '../types/user';
 import type { LoginRequest, RegisterRequest } from '../types/auth';
 import * as authApi from '../api/auth';
 import * as userApi from '../api/user';
-import { getRefreshToken, setTokens, clearTokens } from '../lib/axios';
+import { getRefreshToken, setTokens, clearTokens, getAccessToken } from '../lib/axios';
 
 interface AuthState {
   // 状态
@@ -26,7 +27,9 @@ interface AuthState {
   checkAuth: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
   // 初始状态
   user: null,
   isLoading: false,
@@ -116,18 +119,39 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   // 检查认证状态
   checkAuth: async () => {
+    const accessToken = getAccessToken();
     const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-      set({ isAuthenticated: false, user: null });
+
+    // 如果没有 token，直接设置为未认证
+    if (!accessToken && !refreshToken) {
+      set({ isAuthenticated: false, user: null, isLoading: false });
       return;
     }
 
+    // 如果有 token 但还没有用户信息，尝试获取
     set({ isLoading: true });
     try {
       const user = await userApi.getCurrentUser();
       set({ user, isAuthenticated: true, isLoading: false });
     } catch {
-      set({ isAuthenticated: false, user: null, isLoading: false });
+      // API 调用失败，可能是 token 过期或无效
+      // 检查是否还有 refresh token（可能刚刷新过）
+      const currentRefreshToken = getRefreshToken();
+      if (!currentRefreshToken) {
+        set({ isAuthenticated: false, user: null, isLoading: false });
+      } else {
+        // 还有 refresh token，保持认证状态，下次请求会自动刷新
+        set({ isLoading: false });
+      }
     }
   },
-}));
+}),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);

@@ -87,9 +87,8 @@ async function refreshAccessToken(): Promise<string | null> {
     setTokens(access_token, newRefreshToken);
     return access_token;
   } catch {
+    // 刷新失败，清除 tokens，但不跳转（让 ProtectedRoute 处理）
     clearTokens();
-    // 跳转到登录页
-    window.location.href = '/login';
     return null;
   }
 }
