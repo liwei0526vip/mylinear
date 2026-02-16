@@ -1,0 +1,23 @@
+# MyLinear Caddy 反向代理配置
+# 用于生产部署或开发时完整代理模式
+#
+# 启动方式：
+#   docker compose --profile proxy up -d
+
+:80 {
+	# API 请求代理至后端 (Go Gin 服务)
+	handle /api/* {
+		reverse_proxy host.docker.internal:8080
+	}
+
+	# 其他请求代理至前端 (Vite 开发服务器或构建产物)
+	handle /* {
+		reverse_proxy host.docker.internal:5173
+	}
+
+	# 日志
+	log {
+		output stdout
+		format console
+	}
+}

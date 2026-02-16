@@ -1,0 +1,81 @@
+# MyLinear 开发环境容器编排
+# 使用方式：
+#   docker compose up -d              # 启动基础服务（PostgreSQL、Redis、MinIO）
+#   docker compose --profile proxy up -d  # 启动全部服务（含 Caddy）
+
+services:
+  # PostgreSQL 16 数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: mylinear-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mylinear
+      POSTGRES_PASSWORD: mylinear
+      POSTGRES_DB: mylinear
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mylinear"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 7 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: mylinear-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO 对象存储 (S3 兼容)
+  minio:
+    image: minio/minio:latest
+    container_name: mylinear-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"   # API 端口
+      - "9001:9001"   # 控制台端口
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Caddy 反向代理 (生产部署用，开发时可选)
+  caddy:
+    image: caddy:2-alpine
+    container_name: mylinear-caddy
+    restart: unless-stopped
+    profiles:
+      - proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  caddy_data:
+  caddy_config:
