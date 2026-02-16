@@ -119,6 +119,50 @@ ps:
 	docker compose ps
 
 # ============================================================================
+# 数据库迁移
+# ============================================================================
+
+# 数据库连接 URL（可通过环境变量覆盖）
+DATABASE_URL ?= postgres://postgres:postgres@localhost:5432/mylinear?sslmode=disable
+MIGRATIONS_PATH := server/migrations
+
+# 执行数据库迁移（向上）
+migrate-up:
+	@echo "$(GREEN)执行数据库迁移...$(NC)"
+	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" up
+
+# 回滚最近一次迁移
+migrate-down:
+	@echo "$(YELLOW)回滚最近一次迁移...$(NC)"
+	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" down 1
+
+# 回滚所有迁移
+migrate-down-all:
+	@echo "$(YELLOW)回滚所有迁移...$(NC)"
+	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" down
+
+# 创建新迁移文件
+migrate-create:
+	@read -p "请输入迁移名称: " name; \
+	if [ -n "$$name" ]; then \
+		echo "$(GREEN)创建迁移文件: $$name$(NC)"; \
+		migrate create -ext sql -dir $(MIGRATIONS_PATH) -seq $$name; \
+	fi
+
+# 查看迁移状态
+migrate-version:
+	@echo "$(GREEN)当前迁移版本:$(NC)"
+	migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" version
+
+# 强制设置迁移版本（谨慎使用）
+migrate-force:
+	@read -p "请输入版本号: " version; \
+	if [ -n "$$version" ]; then \
+		echo "$(YELLOW)强制设置版本: $$version$(NC)"; \
+		migrate -path $(MIGRATIONS_PATH) -database "$(DATABASE_URL)" force $$version; \
+	fi
+
+# ============================================================================
 # 帮助
 # ============================================================================
 
@@ -151,3 +195,10 @@ help:
 	@echo "  make lint         检查代码质量"
 	@echo "  make logs         查看容器日志"
 	@echo "  make ps           查看容器状态"
+	@echo ""
+	@echo "$(YELLOW)数据库迁移:$(NC)"
+	@echo "  make migrate-up      执行数据库迁移"
+	@echo "  make migrate-down    回滚最近一次迁移"
+	@echo "  make migrate-down-all 回滚所有迁移"
+	@echo "  make migrate-create  创建新迁移文件"
+	@echo "  make migrate-version 查看迁移版本"

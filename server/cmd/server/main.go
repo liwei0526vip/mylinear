@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +12,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/mylinear/server/internal/config"
 	"github.com/mylinear/server/internal/handler"
 	"github.com/redis/go-redis/v9"
@@ -50,6 +54,13 @@ func main() {
 		} else {
 			if err := sqlDB.Ping(); err != nil {
 				dbHealthy = false
+			}
+		}
+
+		// 执行数据库迁移
+		if dbHealthy && os.Getenv("SKIP_MIGRATION") != "true" {
+			if err := runMigrations(cfg.DatabaseURL); err != nil {
+				log.Printf("警告: 数据库迁移失败: %v", err)
 			}
 		}
 	}
@@ -150,4 +161,39 @@ func parseRedisAddr(redisURL string) string {
 	}
 
 	return addr
+}
+
+// runMigrations 执行数据库迁移
+func runMigrations(databaseURL string) error {
+	// 获取迁移文件路径
+	// 优先使用环境变量 MIGRATIONS_PATH，否则使用默认路径
+	migrationsPath := os.Getenv("MIGRATIONS_PATH")
+	if migrationsPath == "" {
+		// 默认迁移路径（相对于工作目录）
+		migrationsPath = "migrations"
+	}
+
+	// 创建迁移实例
+	m, err := migrate.New(
+		"file://"+migrationsPath,
+		databaseURL,
+	)
+	if err != nil {
+		return fmt.Errorf("创建迁移实例失败: %w", err)
+	}
+	defer m.Close()
+
+	// 执行迁移
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("执行迁移失败: %w", err)
+	}
+
+	version, dirty, err := m.Version()
+	if err != nil {
+		log.Printf("数据库迁移完成，无法获取版本: %v", err)
+	} else {
+		log.Printf("数据库迁移完成，当前版本: %d, dirty: %v", version, dirty)
+	}
+
+	return nil
 }
