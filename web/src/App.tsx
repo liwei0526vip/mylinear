@@ -1,8 +1,13 @@
 import { useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAppStore } from '@/stores/app-store'
 import { checkHealth } from '@/api/client'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+import LoginPage from '@/pages/Login'
+import RegisterPage from '@/pages/Register'
+import ProfilePage from '@/pages/Profile'
 
-function App() {
+function HomePage() {
   const { backendStatus, setBackendStatus } = useAppStore()
 
   useEffect(() => {
@@ -63,6 +68,37 @@ function App() {
         </div>
       </div>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Routes>
+      {/* 公开路由 */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      {/* 受保护路由 */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 默认重定向 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 

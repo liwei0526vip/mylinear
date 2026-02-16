@@ -17,6 +17,9 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/mylinear/server/internal/config"
 	"github.com/mylinear/server/internal/handler"
+	"github.com/mylinear/server/internal/middleware"
+	"github.com/mylinear/server/internal/service"
+	"github.com/mylinear/server/internal/store"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -80,6 +83,60 @@ func main() {
 	v1 := router.Group("/api/v1")
 	{
 		v1.GET("/health", healthHandler.Check)
+	}
+
+	// 初始化服务和处理器（仅在数据库可用时）
+	if db != nil && dbHealthy {
+		// 初始化 Store
+		userStore := store.NewUserStore(db)
+
+		// 初始化服务
+		jwtService := service.NewJWTService(cfg)
+		authService := service.NewAuthService(userStore, jwtService, rdb, cfg)
+		userService := service.NewUserService(userStore)
+
+		// 初始化 AvatarService（可选，需要 MinIO）
+		var avatarService service.AvatarService
+		avatarCfg := &service.AvatarConfig{
+			Endpoint:      cfg.MinioEndpoint,
+			AccessKey:     cfg.MinioAccessKey,
+			SecretKey:     cfg.MinioSecretKey,
+			BucketName:    cfg.MinioBucket,
+			UseSSL:        cfg.MinioUseSSL,
+			AvatarBaseURL: cfg.AvatarBaseURL,
+		}
+		var err error
+		avatarService, err = service.NewAvatarService(avatarCfg)
+		if err != nil {
+			log.Printf("警告: AvatarService 初始化失败: %v，头像上传功能不可用", err)
+		}
+
+		// 初始化处理器
+		authHandler := handler.NewAuthHandler(authService)
+		userHandler := handler.NewUserHandlerWithAvatar(userService, avatarService)
+
+		// 认证中间件
+		authMiddleware := middleware.Auth(jwtService)
+
+		// 注册认证路由（公开）
+		authGroup := v1.Group("/auth")
+		{
+			authGroup.POST("/register", authHandler.Register)
+			authGroup.POST("/login", authHandler.Login)
+			authGroup.POST("/refresh", authHandler.Refresh)
+			authGroup.POST("/logout", authHandler.Logout)
+		}
+
+		// 注册用户路由（需认证）
+		usersGroup := v1.Group("/users")
+		usersGroup.Use(authMiddleware)
+		{
+			usersGroup.GET("/me", userHandler.GetMe)
+			usersGroup.PATCH("/me", userHandler.UpdateMe)
+			usersGroup.POST("/me/avatar", userHandler.UploadAvatar)
+		}
+	} else {
+		log.Println("警告: 数据库不可用，认证和用户 API 不可用")
 	}
 
 	// 创建 HTTP 服务器
