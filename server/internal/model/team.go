@@ -10,24 +10,25 @@ import (
 // Team 团队模型
 type Team struct {
 	Model
-	WorkspaceID     uuid.UUID      `gorm:"type:uuid;not null;index" json:"workspace_id"`
-	ParentID        *uuid.UUID     `gorm:"type:uuid;index" json:"parent_id,omitempty"`
-	Name            string         `gorm:"type:varchar(255);not null" json:"name"`
-	Key             string         `gorm:"type:varchar(10);uniqueIndex;not null" json:"key"`
-	IconURL         *string        `gorm:"type:text" json:"icon_url,omitempty"`
-	Timezone        string         `gorm:"type:varchar(64);not null;default:'UTC'" json:"timezone"`
-	IsPrivate       bool           `gorm:"not null;default:false" json:"is_private"`
-	CycleSettings   datatypes.JSON `gorm:"type:jsonb;default:'{}'" json:"cycle_settings,omitempty"`
+	WorkspaceID      uuid.UUID      `gorm:"type:uuid;not null;index" json:"workspace_id"`
+	ParentID         *uuid.UUID     `gorm:"type:uuid;index" json:"parent_id,omitempty"`
+	Name             string         `gorm:"type:varchar(255);not null" json:"name"`
+	Key              string         `gorm:"type:varchar(10);uniqueIndex;not null" json:"key"`
+	Description      string         `gorm:"type:text" json:"description"`
+	IconURL          *string        `gorm:"type:text" json:"icon_url,omitempty"`
+	Timezone         string         `gorm:"type:varchar(64);not null;default:'UTC'" json:"timezone"`
+	IsPrivate        bool           `gorm:"not null;default:false" json:"is_private"`
+	CycleSettings    datatypes.JSON `gorm:"type:jsonb;default:'{}'" json:"cycle_settings,omitempty"`
 	WorkflowSettings datatypes.JSON `gorm:"type:jsonb;default:'{}'" json:"workflow_settings,omitempty"`
 
 	// 关联关系
-	Workspace    *Workspace      `gorm:"foreignKey:WorkspaceID;constraint:OnDelete:CASCADE" json:"workspace,omitempty"`
-	Parent       *Team           `gorm:"foreignKey:ParentID;constraint:OnDelete:SET NULL" json:"parent,omitempty"`
-	Children     []Team          `gorm:"foreignKey:ParentID;constraint:OnDelete:SET NULL" json:"children,omitempty"`
-	Members      []TeamMember    `gorm:"foreignKey:TeamID;constraint:OnDelete:CASCADE" json:"members,omitempty"`
-	Issues       []Issue         `gorm:"foreignKey:TeamID;constraint:OnDelete:CASCADE" json:"issues,omitempty"`
+	Workspace      *Workspace      `gorm:"foreignKey:WorkspaceID;constraint:OnDelete:CASCADE" json:"workspace,omitempty"`
+	Parent         *Team           `gorm:"foreignKey:ParentID;constraint:OnDelete:SET NULL" json:"parent,omitempty"`
+	Children       []Team          `gorm:"foreignKey:ParentID;constraint:OnDelete:SET NULL" json:"children,omitempty"`
+	Members        []TeamMember    `gorm:"foreignKey:TeamID;constraint:OnDelete:CASCADE" json:"members,omitempty"`
+	Issues         []Issue         `gorm:"foreignKey:TeamID;constraint:OnDelete:CASCADE" json:"issues,omitempty"`
 	WorkflowStates []WorkflowState `gorm:"foreignKey:TeamID;constraint:OnDelete:CASCADE" json:"workflow_states,omitempty"`
-	Cycles       []Cycle         `gorm:"foreignKey:TeamID;constraint:OnDelete:CASCADE" json:"cycles,omitempty"`
+	Cycles         []Cycle         `gorm:"foreignKey:TeamID;constraint:OnDelete:CASCADE" json:"cycles,omitempty"`
 }
 
 // TableName 指定表名

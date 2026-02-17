@@ -18,6 +18,7 @@ import (
 	"github.com/mylinear/server/internal/config"
 	"github.com/mylinear/server/internal/handler"
 	"github.com/mylinear/server/internal/middleware"
+	apiRouter "github.com/mylinear/server/internal/router"
 	"github.com/mylinear/server/internal/service"
 	"github.com/mylinear/server/internal/store"
 	"github.com/redis/go-redis/v9"
@@ -89,11 +90,17 @@ func main() {
 	if db != nil && dbHealthy {
 		// 初始化 Store
 		userStore := store.NewUserStore(db)
+		workspaceStore := store.NewWorkspaceStore(db)
+		teamStore := store.NewTeamStore(db)
+		teamMemberStore := store.NewTeamMemberStore(db)
 
 		// 初始化服务
 		jwtService := service.NewJWTService(cfg)
 		authService := service.NewAuthService(userStore, jwtService, rdb, cfg)
 		userService := service.NewUserService(userStore)
+		workspaceService := service.NewWorkspaceService(workspaceStore, userStore)
+		teamService := service.NewTeamService(teamStore, teamMemberStore, userStore)
+		teamMemberService := service.NewTeamMemberService(teamMemberStore, userStore, teamStore)
 
 		// 初始化 AvatarService（可选，需要 MinIO）
 		var avatarService service.AvatarService
@@ -135,6 +142,15 @@ func main() {
 			usersGroup.PATCH("/me", userHandler.UpdateMe)
 			usersGroup.POST("/me/avatar", userHandler.UploadAvatar)
 		}
+
+		// 注册 Workspace 路由
+		apiRouter.RegisterWorkspaceRoutes(v1, db, jwtService, workspaceService)
+
+		// 注册 Team 路由
+		apiRouter.RegisterTeamRoutes(v1, db, jwtService, teamService)
+
+		// 注册 TeamMember 路由
+		apiRouter.RegisterTeamMemberRoutes(v1, db, jwtService, teamMemberService)
 	} else {
 		log.Println("警告: 数据库不可用，认证和用户 API 不可用")
 	}

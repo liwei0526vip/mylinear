@@ -1,6 +1,6 @@
-# 权限中间件规格
+# 权限中间件规格（Delta）
 
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: 系统支持基于角色的权限控制
 
@@ -85,6 +85,8 @@
 - **WHEN** 调用 `IsAdmin(c)` 函数
 - **THEN** 返回 true
 
+## ADDED Requirements
+
 ### Requirement: 团队级角色检查
 
 系统 SHALL 支持检查用户在特定团队中的角色（Team Owner / Team Member）。
@@ -166,7 +168,7 @@
 - **THEN** 从缓存读取角色信息
 - **AND** 不查询数据库
 
-#### Scenario: 团队角色缓存失效
+#### Scenario: 囓队角色缓存失效
 
 - **GIVEN** 用户的团队角色被修改
 - **WHEN** 角色修改操作完成

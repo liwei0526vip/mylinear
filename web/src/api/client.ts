@@ -1,7 +1,4 @@
-/**
- * API 客户端封装
- * 自动添加 /api/v1 前缀，处理 JSON 解析和错误
- */
+import { getAccessToken } from '../lib/axios';
 
 const API_BASE = '/api/v1'
 
@@ -26,11 +23,13 @@ export async function api<T>(
   const { method = 'GET', body, headers = {} } = options
 
   const url = `${API_BASE}${endpoint}`
+  const token = getAccessToken();
 
   const config: RequestInit = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...headers,
     },
   }

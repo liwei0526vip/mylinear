@@ -9,6 +9,7 @@ export interface User {
   username: string;
   name: string;
   role: string;
+  workspace_id?: string;
   avatar_url?: string;
 }
 

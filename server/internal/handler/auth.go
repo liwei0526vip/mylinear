@@ -49,18 +49,19 @@ type LogoutRequest struct {
 
 // AuthResponse 认证响应
 type AuthResponse struct {
-	AccessToken  string      `json:"access_token"`
-	RefreshToken string      `json:"refresh_token"`
-	User         *UserDTO    `json:"user"`
+	AccessToken  string   `json:"access_token"`
+	RefreshToken string   `json:"refresh_token"`
+	User         *UserDTO `json:"user"`
 }
 
 // UserDTO 用户数据传输对象
 type UserDTO struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Role     string `json:"role"`
+	ID          string `json:"id"`
+	WorkspaceID string `json:"workspace_id"`
+	Email       string `json:"email"`
+	Username    string `json:"username"`
+	Name        string `json:"name"`
+	Role        string `json:"role"`
 }
 
 // Register 用户注册
@@ -115,11 +116,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 			User: &UserDTO{
-				ID:       user.ID.String(),
-				Email:    user.Email,
-				Username: user.Username,
-				Name:     user.Name,
-				Role:     string(user.Role),
+				ID:          user.ID.String(),
+				WorkspaceID: user.WorkspaceID.String(),
+				Email:       user.Email,
+				Username:    user.Username,
+				Name:        user.Name,
+				Role:        string(user.Role),
 			},
 		},
 	})
@@ -157,11 +159,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 			User: &UserDTO{
-				ID:       user.ID.String(),
-				Email:    user.Email,
-				Username: user.Username,
-				Name:     user.Name,
-				Role:     string(user.Role),
+				ID:          user.ID.String(),
+				WorkspaceID: user.WorkspaceID.String(),
+				Email:       user.Email,
+				Username:    user.Username,
+				Name:        user.Name,
+				Role:        string(user.Role),
 			},
 		},
 	})

@@ -6,6 +6,9 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import LoginPage from '@/pages/Login'
 import RegisterPage from '@/pages/Register'
 import ProfilePage from '@/pages/Profile'
+import { WorkspaceSettingsPage } from '@/pages/Settings/Workspace'
+import { TeamsPage } from '@/pages/Settings/Teams'
+import { TeamDetailPage } from '@/pages/Settings/TeamDetail'
 
 function HomePage() {
   const { backendStatus, setBackendStatus } = useAppStore()
@@ -92,6 +95,30 @@ function App() {
         element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/workspace"
+        element={
+          <ProtectedRoute>
+            <WorkspaceSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/teams"
+        element={
+          <ProtectedRoute>
+            <TeamsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/teams/:teamId"
+        element={
+          <ProtectedRoute>
+            <TeamDetailPage />
           </ProtectedRoute>
         }
       />
