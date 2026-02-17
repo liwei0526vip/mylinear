@@ -93,7 +93,7 @@ func (s *authService) Register(ctx context.Context, workspaceID uuid.UUID, email
 		Username:     username,
 		Name:         name,
 		PasswordHash: string(passwordHash),
-		Role:         model.RoleMember,
+		Role:         model.RoleAdmin, // 私有部署，注册用户默认为管理员
 	}
 
 	if err := s.userStore.CreateUser(ctx, user); err != nil {

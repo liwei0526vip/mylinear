@@ -24,6 +24,7 @@ export function CreateTeamDialog({ open, onOpenChange, onSuccess }: CreateTeamDi
   const [key, setKey] = useState('');
   const [description, setDescription] = useState('');
   const [keyError, setKeyError] = useState('');
+  const [localError, setLocalError] = useState('');
 
   const validateKey = (value: string): boolean => {
     if (value.length < 2 || value.length > 10) {
@@ -50,12 +51,14 @@ export function CreateTeamDialog({ open, onOpenChange, onSuccess }: CreateTeamDi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError('');
 
     if (!validateKey(key)) {
       return;
     }
 
     if (!user?.workspace_id) {
+      setLocalError('无法获取工作区信息，请重新登录');
       return;
     }
 
@@ -86,9 +89,9 @@ export function CreateTeamDialog({ open, onOpenChange, onSuccess }: CreateTeamDi
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {(error || localError) && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
+                {localError || error}
               </div>
             )}
 

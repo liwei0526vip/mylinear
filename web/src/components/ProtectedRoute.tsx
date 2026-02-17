@@ -11,15 +11,15 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, checkAuth, user } = useAuthStore();
   const location = useLocation();
 
   useEffect(() => {
-    // 如果还没有检查过认证状态，进行检查
-    if (!isAuthenticated && !isLoading) {
+    // 如果还没有检查过认证状态，或者用户信息不完整，进行检查
+    if ((!isAuthenticated || !user?.workspace_id) && !isLoading) {
       checkAuth();
     }
-  }, [isAuthenticated, isLoading, checkAuth]);
+  }, [isAuthenticated, isLoading, checkAuth, user?.workspace_id]);
 
   // 加载中显示加载状态
   if (isLoading) {

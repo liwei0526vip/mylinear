@@ -43,6 +43,7 @@ export interface LogoutRequest {
 // 用户信息
 export interface User {
   id: string;
+  workspace_id: string;
   email: string;
   username: string;
   name: string;
