@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/mylinear/server/internal/model"
-	"github.com/mylinear/server/internal/store"
+	"github.com/liwei0526vip/mylinear/internal/model"
+	"github.com/liwei0526vip/mylinear/internal/store"
 )
 
 // TeamMemberService 定义团队成员服务接口

@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 
 export function WorkspaceSettings() {
   const { user } = useAuthStore();
-  const { workspace, isLoading, error, fetchWorkspace, updateWorkspace, clearError } =
+  const { workspace, isLoading, error, fetchWorkspace, updateWorkspace } =
     useWorkspaceStore();
 
   const [name, setName] = useState('');

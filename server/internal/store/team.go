@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/mylinear/server/internal/model"
+	"github.com/liwei0526vip/mylinear/internal/model"
 	"gorm.io/gorm"
 )
 

@@ -3,7 +3,7 @@
  * 提供 Key 格式校验和唯一性异步校验
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 
@@ -43,7 +43,6 @@ export function TeamKeyInput({
   disabled,
 }: TeamKeyInputProps) {
   const [formatError, setFormatError] = useState('');
-  const [isCheckingUniqueness, setIsCheckingUniqueness] = useState(false);
 
   // 校验格式
   useEffect(() => {
@@ -70,9 +69,6 @@ export function TeamKeyInput({
         disabled={disabled}
         className={formatError ? 'border-destructive' : ''}
       />
-      {isCheckingUniqueness && (
-        <p className="text-xs text-muted-foreground">检查唯一性...</p>
-      )}
       {formatError && (
         <p className="text-sm text-destructive">{formatError}</p>
       )}

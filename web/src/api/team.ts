@@ -5,7 +5,6 @@
 import { api } from './client';
 import type {
   Team,
-  TeamMember,
   TeamListResponse,
   CreateTeamRequest,
   UpdateTeamRequest,

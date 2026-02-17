@@ -1,4 +1,4 @@
-module github.com/mylinear/server
+module github.com/liwei0526vip/mylinear
 
 go 1.25.5
 

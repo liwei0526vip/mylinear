@@ -3,9 +3,9 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/mylinear/server/internal/handler"
-	"github.com/mylinear/server/internal/middleware"
-	"github.com/mylinear/server/internal/service"
+	"github.com/liwei0526vip/mylinear/internal/handler"
+	"github.com/liwei0526vip/mylinear/internal/middleware"
+	"github.com/liwei0526vip/mylinear/internal/service"
 	"gorm.io/gorm"
 )
 

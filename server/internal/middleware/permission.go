@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/mylinear/server/internal/model"
-	"github.com/mylinear/server/internal/store"
+	"github.com/liwei0526vip/mylinear/internal/model"
+	"github.com/liwei0526vip/mylinear/internal/store"
 	"gorm.io/gorm"
 )
 

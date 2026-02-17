@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mylinear/server/internal/middleware"
-	"github.com/mylinear/server/internal/service"
+	"github.com/liwei0526vip/mylinear/internal/middleware"
+	"github.com/liwei0526vip/mylinear/internal/service"
 )
 
 // 文件上传配置

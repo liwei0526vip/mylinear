@@ -6,8 +6,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/mylinear/server/internal/config"
-	"github.com/mylinear/server/internal/model"
+	"github.com/liwei0526vip/mylinear/internal/config"
+	"github.com/liwei0526vip/mylinear/internal/model"
 )
 
 // TestJWTService_Interface 测试 JWTService 接口定义存在

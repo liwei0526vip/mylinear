@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mylinear/server/internal/model"
-	"github.com/mylinear/server/internal/service"
+	"github.com/liwei0526vip/mylinear/internal/model"
+	"github.com/liwei0526vip/mylinear/internal/service"
 )
 
 // TeamMemberHandler 团队成员处理器

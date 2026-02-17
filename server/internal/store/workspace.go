@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mylinear/server/internal/model"
+	"github.com/liwei0526vip/mylinear/internal/model"
 	"gorm.io/gorm"
 )
 

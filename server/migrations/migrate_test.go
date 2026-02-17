@@ -109,7 +109,7 @@ func TestUpAndDownMigrationPairs(t *testing.T) {
 
 // TestMigrationVersionOrder 测试迁移版本号顺序
 func TestMigrationVersionOrder(t *testing.T) {
-	expectedVersions := []string{"000001", "000002", "000003"}
+	expectedVersions := []string{"000001", "000002", "000003", "000004"}
 
 	for i, version := range expectedVersions {
 		upFile := version + "_*.up.sql"
@@ -148,14 +148,16 @@ func TestSQLSyntaxBasic(t *testing.T) {
 			}
 
 			contentStr := string(content)
+			contentUpper := strings.ToUpper(contentStr)
 
-			// 检查是否包含基本的 SQL 语句
-			hasCreate := strings.Contains(strings.ToUpper(contentStr), "CREATE TABLE")
-			if !hasCreate {
-				t.Errorf("up 迁移文件应该包含 CREATE TABLE 语句: %s", filepath.Base(file))
+			// 检查是否包含基本的 SQL 语句（CREATE TABLE 或 ALTER TABLE）
+			hasCreate := strings.Contains(contentUpper, "CREATE TABLE")
+			hasAlter := strings.Contains(contentUpper, "ALTER TABLE")
+			if !hasCreate && !hasAlter {
+				t.Errorf("up 迁移文件应该包含 CREATE TABLE 或 ALTER TABLE 语句: %s", filepath.Base(file))
 			}
 
-			// 检查是否有 UUID 主键
+			// 检查是否有 UUID 主键（仅对 CREATE TABLE）
 			if hasCreate && !strings.Contains(contentStr, "UUID PRIMARY KEY") {
 				t.Errorf("表应该使用 UUID 主键: %s", filepath.Base(file))
 			}
@@ -178,11 +180,13 @@ func TestDownMigrationSyntax(t *testing.T) {
 			}
 
 			contentStr := string(content)
+			contentUpper := strings.ToUpper(contentStr)
 
-			// 检查是否包含 DROP TABLE 语句
-			hasDrop := strings.Contains(strings.ToUpper(contentStr), "DROP TABLE")
-			if !hasDrop {
-				t.Errorf("down 迁移文件应该包含 DROP TABLE 语句: %s", filepath.Base(file))
+			// 检查是否包含 DROP TABLE 或 ALTER TABLE（用于删除列）语句
+			hasDropTable := strings.Contains(contentUpper, "DROP TABLE")
+			hasAlterTable := strings.Contains(contentUpper, "ALTER TABLE")
+			if !hasDropTable && !hasAlterTable {
+				t.Errorf("down 迁移文件应该包含 DROP TABLE 或 ALTER TABLE 语句: %s", filepath.Base(file))
 			}
 		})
 	}

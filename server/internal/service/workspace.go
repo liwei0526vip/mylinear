@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/mylinear/server/internal/model"
-	"github.com/mylinear/server/internal/store"
+	"github.com/liwei0526vip/mylinear/internal/model"
+	"github.com/liwei0526vip/mylinear/internal/store"
 )
 
 // WorkspaceService 定义工作区服务接口
