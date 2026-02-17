@@ -96,11 +96,20 @@ func main() {
 
 		// 初始化服务
 		jwtService := service.NewJWTService(cfg)
-		authService := service.NewAuthService(userStore, jwtService, rdb, cfg)
+		authService := service.NewAuthService(userStore, workspaceStore, jwtService, rdb, cfg)
 		userService := service.NewUserService(userStore)
 		workspaceService := service.NewWorkspaceService(workspaceStore, userStore)
-		teamService := service.NewTeamService(teamStore, teamMemberStore, userStore)
+
+		// Workflow Service
+		workflowStateStore := store.NewWorkflowStateStore(db)
+		workflowService := service.NewWorkflowService(workflowStateStore, teamStore)
+
+		teamService := service.NewTeamService(teamStore, teamMemberStore, userStore, workflowService)
 		teamMemberService := service.NewTeamMemberService(teamMemberStore, userStore, teamStore)
+
+		// Label Service
+		labelStore := store.NewLabelStore(db)
+		labelService := service.NewLabelService(labelStore)
 
 		// 初始化 AvatarService（可选，需要 MinIO）
 		var avatarService service.AvatarService
@@ -151,6 +160,12 @@ func main() {
 
 		// 注册 TeamMember 路由
 		apiRouter.RegisterTeamMemberRoutes(v1, db, jwtService, teamMemberService)
+
+		// 注册 Workflow 路由
+		apiRouter.RegisterWorkflowRoutes(v1, db, jwtService, workflowService)
+
+		// 注册 Label 路由
+		apiRouter.RegisterLabelRoutes(v1, db, jwtService, labelService, teamStore)
 	} else {
 		log.Println("警告: 数据库不可用，认证和用户 API 不可用")
 	}

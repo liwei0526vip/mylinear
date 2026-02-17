@@ -15,6 +15,7 @@ import (
 	"github.com/liwei0526vip/mylinear/internal/model"
 	"github.com/liwei0526vip/mylinear/internal/service"
 	"github.com/liwei0526vip/mylinear/internal/store"
+	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -134,7 +135,9 @@ func TestTeamRoutes(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := service.NewWorkflowService(workflowStateStore, teamStore)
+	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 	teamHandler := handler.NewTeamHandler(teamService)
 
 	// 生成 token
@@ -257,7 +260,9 @@ func TestMiddlewareChain(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := service.NewWorkflowService(workflowStateStore, teamStore)
+	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 	teamHandler := handler.NewTeamHandler(teamService)
 
 	token, _ := jwtService.GenerateAccessToken(admin.ID, admin.Email, admin.Role)
@@ -295,4 +300,72 @@ func TestMiddlewareChain(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestWorkflowRoutes(t *testing.T) {
+	router, db, jwtService := setupRouterTest(t)
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	prefix := uuid.New().String()[:8]
+	workspace := &model.Workspace{Name: "WF Router Test " + prefix, Slug: "wf-router-test-" + prefix}
+	tx.Create(workspace)
+	admin := &model.User{
+		WorkspaceID: workspace.ID, Email: prefix + "@example.com", Username: prefix + "_admin",
+		Name: "Admin", PasswordHash: "hash", Role: model.RoleAdmin,
+	}
+	tx.Create(admin)
+	team := &model.Team{WorkspaceID: workspace.ID, Name: "Team " + prefix, Key: "RT" + "ABC"}
+	tx.Create(team)
+
+	teamStore := store.NewTeamStore(tx)
+	stateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := service.NewWorkflowService(stateStore, teamStore)
+
+	token, _ := jwtService.GenerateAccessToken(admin.ID, admin.Email, admin.Role)
+
+	rg := router.Group("/api/v1")
+	RegisterWorkflowRoutes(rg, tx, jwtService, workflowSvc)
+
+	req := httptest.NewRequest("GET", "/api/v1/teams/"+team.ID.String()+"/workflow-states", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestLabelRoutes(t *testing.T) {
+	router, db, jwtService := setupRouterTest(t)
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	prefix := uuid.New().String()[:8]
+	workspace := &model.Workspace{Name: "Label Router Test " + prefix, Slug: "label-router-test-" + prefix}
+	tx.Create(workspace)
+	admin := &model.User{
+		WorkspaceID: workspace.ID, Email: prefix + "@example.com", Username: prefix + "_admin",
+		Name: "Admin", PasswordHash: "hash", Role: model.RoleAdmin,
+	}
+	tx.Create(admin)
+	team := &model.Team{WorkspaceID: workspace.ID, Name: "Team " + prefix, Key: "RL" + "ABC"}
+	tx.Create(team)
+
+	labelStore := store.NewLabelStore(tx)
+	teamStore := store.NewTeamStore(tx)
+	labelSvc := service.NewLabelService(labelStore)
+
+	token, _ := jwtService.GenerateAccessToken(admin.ID, admin.Email, admin.Role)
+
+	rg := router.Group("/api/v1")
+	RegisterLabelRoutes(rg, tx, jwtService, labelSvc, teamStore)
+
+	req := httptest.NewRequest("GET", "/api/v1/teams/"+team.ID.String()+"/labels", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }

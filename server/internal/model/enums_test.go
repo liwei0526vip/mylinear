@@ -104,7 +104,7 @@ func TestStateType(t *testing.T) {
 		{"未开始有效", StateTypeUnstarted, true},
 		{"进行中有效", StateTypeStarted, true},
 		{"已完成有效", StateTypeCompleted, true},
-		{"已取消有效", StateTypeCancelled, true},
+		{"已取消有效", StateTypeCanceled, true},
 		{"无效类型", StateType("invalid"), false},
 		{"空类型", StateType(""), false},
 	}
@@ -193,9 +193,9 @@ func TestCycleStatus(t *testing.T) {
 // TestNotificationType 测试 NotificationType 枚举类型
 func TestNotificationType(t *testing.T) {
 	tests := []struct {
-		name      string
+		name       string
 		notifyType NotificationType
-		wantValid bool
+		wantValid  bool
 	}{
 		{"Issue 分配有效", NotificationTypeIssueAssigned, true},
 		{"Issue 提及有效", NotificationTypeIssueMentioned, true},
@@ -246,10 +246,10 @@ func TestPriorityIsValid(t *testing.T) {
 // TestEnumScanErrors 测试枚举类型的错误扫描
 func TestEnumScanErrors(t *testing.T) {
 	tests := []struct {
-		name       string
-		scanFn     func(interface{}) error
-		scanValue  interface{}
-		wantErr    bool
+		name      string
+		scanFn    func(interface{}) error
+		scanValue interface{}
+		wantErr   bool
 	}{
 		{
 			name: "Role 扫描无效类型",

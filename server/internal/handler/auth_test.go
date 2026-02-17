@@ -70,8 +70,9 @@ func setupHandlerTest(t *testing.T) (*gin.Engine, service.AuthService, context.C
 	}
 
 	userStore := store.NewUserStore(db)
+	workspaceStore := store.NewWorkspaceStore(db)
 	jwtService := service.NewJWTService(cfg)
-	authService := service.NewAuthService(userStore, jwtService, rdb, cfg)
+	authService := service.NewAuthService(userStore, workspaceStore, jwtService, rdb, cfg)
 
 	// 创建路由
 	router := gin.New()

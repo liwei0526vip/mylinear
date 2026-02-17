@@ -75,7 +75,9 @@ func TestTeamHandler_ListTeams(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := service.NewWorkflowService(workflowStateStore, teamStore)
+	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 	handler := NewTeamHandler(teamService)
 
 	token, _ := jwtService.GenerateAccessToken(admin.ID, admin.Email, admin.Role)
@@ -119,7 +121,9 @@ func TestTeamHandler_CreateTeam(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := service.NewWorkflowService(workflowStateStore, teamStore)
+	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 	handler := NewTeamHandler(teamService)
 
 	adminToken, _ := jwtService.GenerateAccessToken(admin.ID, admin.Email, admin.Role)
@@ -139,8 +143,8 @@ func TestTeamHandler_CreateTeam(t *testing.T) {
 			name:  "Admin 创建团队",
 			token: adminToken,
 			body: map[string]interface{}{
-				"name":        "New Team",
-				"key":         "NT" + "ABC",
+				"name":         "New Team",
+				"key":          "NT" + "ABC",
 				"workspace_id": workspace.ID.String(),
 			},
 			wantStatusCode: http.StatusCreated,
@@ -149,8 +153,8 @@ func TestTeamHandler_CreateTeam(t *testing.T) {
 			name:  "Member 无权限",
 			token: memberToken,
 			body: map[string]interface{}{
-				"name":        "Member Team",
-				"key":         "MT" + "ABC",
+				"name":         "Member Team",
+				"key":          "MT" + "ABC",
 				"workspace_id": workspace.ID.String(),
 			},
 			wantStatusCode: http.StatusForbidden,
@@ -197,7 +201,9 @@ func TestTeamHandler_GetTeam(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := service.NewWorkflowService(workflowStateStore, teamStore)
+	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 	handler := NewTeamHandler(teamService)
 
 	token, _ := jwtService.GenerateAccessToken(member.ID, member.Email, member.Role)
@@ -240,7 +246,9 @@ func TestTeamHandler_UpdateTeam(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := service.NewWorkflowService(workflowStateStore, teamStore)
+	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 	handler := NewTeamHandler(teamService)
 
 	token, _ := jwtService.GenerateAccessToken(owner.ID, owner.Email, owner.Role)
@@ -285,7 +293,9 @@ func TestTeamHandler_DeleteTeam(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := service.NewWorkflowService(workflowStateStore, teamStore)
+	teamService := service.NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 	handler := NewTeamHandler(teamService)
 
 	token, _ := jwtService.GenerateAccessToken(owner.ID, owner.Email, owner.Role)

@@ -55,13 +55,13 @@ const (
 	StateTypeUnstarted StateType = "unstarted" // 未开始
 	StateTypeStarted   StateType = "started"   // 进行中
 	StateTypeCompleted StateType = "completed" // 已完成
-	StateTypeCancelled StateType = "cancelled" // 已取消
+	StateTypeCanceled  StateType = "canceled"  // 已取消
 )
 
 // Valid 验证状态类型是否有效
 func (s StateType) Valid() bool {
 	switch s {
-	case StateTypeBacklog, StateTypeUnstarted, StateTypeStarted, StateTypeCompleted, StateTypeCancelled:
+	case StateTypeBacklog, StateTypeUnstarted, StateTypeStarted, StateTypeCompleted, StateTypeCanceled:
 		return true
 	default:
 		return false
@@ -136,11 +136,11 @@ func (t IssueRelationType) Value() (driver.Value, error) {
 type ProjectStatus string
 
 const (
-	ProjectStatusPlanned    ProjectStatus = "planned"    // 计划中
+	ProjectStatusPlanned    ProjectStatus = "planned"     // 计划中
 	ProjectStatusInProgress ProjectStatus = "in_progress" // 进行中
-	ProjectStatusPaused     ProjectStatus = "paused"     // 已暂停
-	ProjectStatusCompleted  ProjectStatus = "completed"  // 已完成
-	ProjectStatusCancelled  ProjectStatus = "cancelled"  // 已取消
+	ProjectStatusPaused     ProjectStatus = "paused"      // 已暂停
+	ProjectStatusCompleted  ProjectStatus = "completed"   // 已完成
+	ProjectStatusCancelled  ProjectStatus = "cancelled"   // 已取消
 )
 
 // Valid 验证项目状态是否有效
@@ -179,8 +179,8 @@ func (p ProjectStatus) Value() (driver.Value, error) {
 type CycleStatus string
 
 const (
-	CycleStatusUpcoming CycleStatus = "upcoming" // 即将开始
-	CycleStatusActive   CycleStatus = "active"   // 进行中
+	CycleStatusUpcoming  CycleStatus = "upcoming"  // 即将开始
+	CycleStatusActive    CycleStatus = "active"    // 进行中
 	CycleStatusCompleted CycleStatus = "completed" // 已完成
 )
 
@@ -220,13 +220,13 @@ func (c CycleStatus) Value() (driver.Value, error) {
 type NotificationType string
 
 const (
-	NotificationTypeIssueAssigned   NotificationType = "issue_assigned"   // Issue 分配
-	NotificationTypeIssueMentioned  NotificationType = "issue_mentioned"  // Issue 提及
-	NotificationTypeIssueCommented  NotificationType = "issue_commented"  // Issue 评论
+	NotificationTypeIssueAssigned      NotificationType = "issue_assigned"       // Issue 分配
+	NotificationTypeIssueMentioned     NotificationType = "issue_mentioned"      // Issue 提及
+	NotificationTypeIssueCommented     NotificationType = "issue_commented"      // Issue 评论
 	NotificationTypeIssueStatusChanged NotificationType = "issue_status_changed" // Issue 状态变更
-	NotificationTypeProjectUpdated  NotificationType = "project_updated"  // 项目更新
-	NotificationTypeCycleStarted    NotificationType = "cycle_started"    // 迭代开始
-	NotificationTypeCycleEnded      NotificationType = "cycle_ended"      // 迭代结束
+	NotificationTypeProjectUpdated     NotificationType = "project_updated"      // 项目更新
+	NotificationTypeCycleStarted       NotificationType = "cycle_started"        // 迭代开始
+	NotificationTypeCycleEnded         NotificationType = "cycle_ended"          // 迭代结束
 )
 
 // Valid 验证通知类型是否有效

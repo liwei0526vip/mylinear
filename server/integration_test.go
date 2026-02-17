@@ -62,8 +62,9 @@ func setupIntegrationTest(t *testing.T) (*gin.Engine, *gorm.DB, *redis.Client, u
 
 	// 初始化服务
 	userStore := store.NewUserStore(db)
+	workspaceStore := store.NewWorkspaceStore(db)
 	jwtService := service.NewJWTService(cfg)
-	authService := service.NewAuthService(userStore, jwtService, rdb, cfg)
+	authService := service.NewAuthService(userStore, workspaceStore, jwtService, rdb, cfg)
 	userService := service.NewUserService(userStore)
 
 	// 初始化处理器

@@ -37,7 +37,28 @@ func TestMain(m *testing.M) {
 	}
 
 	// 运行迁移（自动迁移测试表）
-	db.AutoMigrate(&model.Workspace{}, &model.User{})
+	// 运行迁移（自动迁移测试表）
+	// 先清理旧表，避免 schema 不一致
+	// 注意：CASCADE 会删除依赖表，顺序不重要，但全面清理更安全
+	db.Exec("DROP TABLE IF EXISTS labels CASCADE")
+	db.Exec("DROP TABLE IF EXISTS workflow_states CASCADE")
+	db.Exec("DROP TABLE IF EXISTS team_members CASCADE")
+	db.Exec("DROP TABLE IF EXISTS teams CASCADE")
+	db.Exec("DROP TABLE IF EXISTS users CASCADE")
+	db.Exec("DROP TABLE IF EXISTS workspaces CASCADE")
+
+	// 注意：顺序很重要，先父后子
+	err = db.AutoMigrate(
+		&model.Workspace{},
+		&model.User{},
+		&model.Team{},
+		&model.TeamMember{},
+		&model.WorkflowState{},
+		&model.Label{},
+	)
+	if err != nil {
+		fmt.Printf("警告: 自动迁移失败: %v\n", err)
+	}
 
 	// 创建测试用的工作区（如果不存在）
 	var workspace model.Workspace
@@ -77,8 +98,8 @@ func TestUserStore_CreateUser_Success(t *testing.T) {
 	prefix := uuid.New().String()[:8]
 
 	tests := []struct {
-		name  string
-		user  *model.User
+		name string
+		user *model.User
 	}{
 		{
 			name: "创建基本用户",

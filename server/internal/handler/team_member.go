@@ -38,7 +38,8 @@ func (h *TeamMemberHandler) ListMembers(c *gin.Context) {
 	result := make([]gin.H, len(members))
 	for i, member := range members {
 		u := gin.H{
-			"id":        member.UserID,
+			"id":        member.UserID.String(),
+			"user_id":   member.UserID.String(),
 			"role":      member.Role,
 			"joined_at": member.JoinedAt,
 		}

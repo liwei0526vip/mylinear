@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -11,29 +9,13 @@ import (
 	"github.com/liwei0526vip/mylinear/internal/model"
 	"github.com/liwei0526vip/mylinear/internal/store"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
+// var testTeamServiceDB *gorm.DB // Already defined in service.go or main_test.go? No, I will define it in main_test.go globally or allow it to be reused.
+// Wait, testTeamServiceDB is used in team_test.go.
+// I will keep the variable declaration but remove assignment in init().
 var testTeamServiceDB *gorm.DB
-
-func init() {
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		databaseURL = "postgres://mylinear:mylinear@localhost:5432/mylinear?sslmode=disable"
-	}
-
-	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	if err != nil {
-		fmt.Printf("警告: 无法连接测试数据库: %v\n", err)
-		return
-	}
-
-	testTeamServiceDB = db
-}
 
 // =============================================================================
 // CreateTeam 测试
@@ -50,7 +32,9 @@ func TestTeamService_CreateTeam(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	svc := NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := NewWorkflowService(workflowStateStore, teamStore)
+	svc := NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 
 	prefix := uuid.New().String()[:8]
 
@@ -165,7 +149,9 @@ func TestTeamService_ListTeams(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	svc := NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := NewWorkflowService(workflowStateStore, teamStore)
+	svc := NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 
 	prefix := uuid.New().String()[:8]
 
@@ -274,7 +260,9 @@ func TestTeamService_GetTeam(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	svc := NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := NewWorkflowService(workflowStateStore, teamStore)
+	svc := NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 
 	prefix := uuid.New().String()[:8]
 
@@ -391,7 +379,9 @@ func TestTeamService_UpdateTeam(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	svc := NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := NewWorkflowService(workflowStateStore, teamStore)
+	svc := NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 
 	prefix := uuid.New().String()[:8]
 
@@ -513,7 +503,9 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 	teamStore := store.NewTeamStore(tx)
 	teamMemberStore := store.NewTeamMemberStore(tx)
 	userStore := store.NewUserStore(tx)
-	svc := NewTeamService(teamStore, teamMemberStore, userStore)
+	workflowStateStore := store.NewWorkflowStateStore(tx)
+	workflowSvc := NewWorkflowService(workflowStateStore, teamStore)
+	svc := NewTeamService(teamStore, teamMemberStore, userStore, workflowSvc)
 
 	prefix := uuid.New().String()[:8]
 

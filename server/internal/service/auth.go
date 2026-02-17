@@ -14,6 +14,7 @@ import (
 	"github.com/liwei0526vip/mylinear/internal/store"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 // 密码强度正则表达式
@@ -35,19 +36,21 @@ type AuthService interface {
 
 // authService 实现 AuthService 接口
 type authService struct {
-	userStore  store.UserStore
-	jwtService JWTService
-	redis      *redis.Client
-	cfg        *config.Config
+	userStore      store.UserStore
+	workspaceStore store.WorkspaceStore
+	jwtService     JWTService
+	redis          *redis.Client
+	cfg            *config.Config
 }
 
 // NewAuthService 创建认证服务实例
-func NewAuthService(userStore store.UserStore, jwtService JWTService, redis *redis.Client, cfg *config.Config) AuthService {
+func NewAuthService(userStore store.UserStore, workspaceStore store.WorkspaceStore, jwtService JWTService, redis *redis.Client, cfg *config.Config) AuthService {
 	return &authService{
-		userStore:  userStore,
-		jwtService: jwtService,
-		redis:      redis,
-		cfg:        cfg,
+		userStore:      userStore,
+		workspaceStore: workspaceStore,
+		jwtService:     jwtService,
+		redis:          redis,
+		cfg:            cfg,
 	}
 }
 
@@ -78,6 +81,11 @@ func (s *authService) Register(ctx context.Context, workspaceID uuid.UUID, email
 	existingUser, err = s.userStore.GetUserByUsername(ctx, username)
 	if err == nil && existingUser != nil {
 		return nil, "", "", fmt.Errorf("用户名已被使用")
+	}
+
+	// 确保 workspace 存在（私有部署：首次注册时自动创建）
+	if err := s.ensureWorkspaceExists(ctx, workspaceID); err != nil {
+		return nil, "", "", fmt.Errorf("确保工作区存在失败: %w", err)
 	}
 
 	// 哈希密码
@@ -207,6 +215,34 @@ func (s *authService) Logout(ctx context.Context, refreshToken string) error {
 	}
 
 	return nil
+}
+
+// ensureWorkspaceExists 确保工作区存在（私有部署：首次注册时自动创建）
+func (s *authService) ensureWorkspaceExists(ctx context.Context, workspaceID uuid.UUID) error {
+	// 检查 workspace 是否已存在
+	_, err := s.workspaceStore.GetByID(ctx, workspaceID.String())
+	if err == nil {
+		// workspace 已存在
+		return nil
+	}
+
+	// 如果是"未找到"错误，创建新的 workspace
+	if err == gorm.ErrRecordNotFound {
+		workspace := &model.Workspace{
+			Model: model.Model{
+				ID: workspaceID,
+			},
+			Name: "MyLinear Workspace",
+			Slug: "default",
+		}
+		if err := s.workspaceStore.Create(ctx, workspace); err != nil {
+			return fmt.Errorf("创建工作区失败: %w", err)
+		}
+		return nil
+	}
+
+	// 其他错误
+	return fmt.Errorf("检查工作区失败: %w", err)
 }
 
 // validatePassword 验证密码强度

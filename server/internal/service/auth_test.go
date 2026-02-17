@@ -68,8 +68,9 @@ func setupAuthTest(t *testing.T) (AuthService, context.Context, func()) {
 	}
 
 	userStore := store.NewUserStore(db)
+	workspaceStore := store.NewWorkspaceStore(db)
 	jwtService := NewJWTService(cfg)
-	authService := NewAuthService(userStore, jwtService, rdb, cfg)
+	authService := NewAuthService(userStore, workspaceStore, jwtService, rdb, cfg)
 
 	// 返回清理函数
 	cleanup := func() {

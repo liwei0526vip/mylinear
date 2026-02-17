@@ -18,6 +18,7 @@ import (
 	"github.com/liwei0526vip/mylinear/internal/service"
 	"github.com/liwei0526vip/mylinear/internal/store"
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/require"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -68,8 +69,9 @@ func setupUserHandlerTest(t *testing.T) (*gin.Engine, service.AuthService, servi
 	}
 
 	userStore := store.NewUserStore(db)
+	workspaceStore := store.NewWorkspaceStore(db)
 	jwtService := service.NewJWTService(cfg)
-	authService := service.NewAuthService(userStore, jwtService, rdb, cfg)
+	authService := service.NewAuthService(userStore, workspaceStore, jwtService, rdb, cfg)
 	userService := service.NewUserService(userStore)
 
 	// 创建路由
@@ -168,7 +170,8 @@ func TestUserHandler_UpdateMe_Success(t *testing.T) {
 	prefix := uuid.New().String()[:8]
 	email := prefix + "_updateme@example.com"
 	password := "Password123!"
-	user, _, _, _ := authService.Register(ctx, userTestWorkspaceID, email, prefix+"_updatemeuser", password, "UpdateMe User")
+	user, _, _, err := authService.Register(ctx, userTestWorkspaceID, email, prefix+"_updatemeuser", password, "UpdateMe User")
+	require.NoError(t, err)
 
 	// 生成访问令牌
 	accessToken, _ := jwtService.GenerateAccessToken(user.ID, user.Email, user.Role)
@@ -221,8 +224,10 @@ func TestUserHandler_UpdateMe_EmailConflict(t *testing.T) {
 	prefix := uuid.New().String()[:8]
 	email1 := prefix + "_conflict1@example.com"
 	email2 := prefix + "_conflict2@example.com"
-	user1, _, _, _ := authService.Register(ctx, userTestWorkspaceID, email1, prefix+"_conflict1user", "Password123!", "Conflict User 1")
-	authService.Register(ctx, userTestWorkspaceID, email2, prefix+"_conflict2user", "Password123!", "Conflict User 2")
+	user1, _, _, err := authService.Register(ctx, userTestWorkspaceID, email1, prefix+"_conflict1user", "Password123!", "Conflict User 1")
+	require.NoError(t, err)
+	_, _, _, err = authService.Register(ctx, userTestWorkspaceID, email2, prefix+"_conflict2user", "Password123!", "Conflict User 2")
+	require.NoError(t, err)
 
 	// 生成用户1的访问令牌
 	accessToken, _ := jwtService.GenerateAccessToken(user1.ID, user1.Email, user1.Role)
@@ -264,8 +269,10 @@ func TestUserHandler_UpdateMe_UsernameConflict(t *testing.T) {
 	prefix := uuid.New().String()[:8]
 	email1 := prefix + "_uconflict1@example.com"
 	email2 := prefix + "_uconflict2@example.com"
-	user1, _, _, _ := authService.Register(ctx, userTestWorkspaceID, email1, prefix+"_uconflict1user", "Password123!", "Username Conflict 1")
-	authService.Register(ctx, userTestWorkspaceID, email2, prefix+"_uconflict2user", "Password123!", "Username Conflict 2")
+	user1, _, _, err := authService.Register(ctx, userTestWorkspaceID, email1, prefix+"_uconflict1user", "Password123!", "Username Conflict 1")
+	require.NoError(t, err)
+	_, _, _, err = authService.Register(ctx, userTestWorkspaceID, email2, prefix+"_uconflict2user", "Password123!", "Username Conflict 2")
+	require.NoError(t, err)
 
 	// 生成用户1的访问令牌
 	accessToken, _ := jwtService.GenerateAccessToken(user1.ID, user1.Email, user1.Role)

@@ -13,6 +13,8 @@ import (
 type WorkspaceStore interface {
 	// GetByID 通过 ID 获取工作区
 	GetByID(ctx context.Context, id string) (*model.Workspace, error)
+	// Create 创建工作区
+	Create(ctx context.Context, workspace *model.Workspace) error
 	// Update 更新工作区信息
 	Update(ctx context.Context, workspace *model.Workspace) error
 	// GetStats 获取工作区统计信息
@@ -44,6 +46,11 @@ func (s *workspaceStore) GetByID(ctx context.Context, id string) (*model.Workspa
 		return nil, err
 	}
 	return &workspace, nil
+}
+
+// Create 创建工作区
+func (s *workspaceStore) Create(ctx context.Context, workspace *model.Workspace) error {
+	return s.db.WithContext(ctx).Create(workspace).Error
 }
 
 // Update 更新工作区信息

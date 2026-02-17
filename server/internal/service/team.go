@@ -30,14 +30,16 @@ type teamService struct {
 	teamStore       store.TeamStore
 	teamMemberStore store.TeamMemberStore
 	userStore       store.UserStore
+	workflowService WorkflowService
 }
 
 // NewTeamService 创建团队服务实例
-func NewTeamService(teamStore store.TeamStore, teamMemberStore store.TeamMemberStore, userStore store.UserStore) TeamService {
+func NewTeamService(teamStore store.TeamStore, teamMemberStore store.TeamMemberStore, userStore store.UserStore, workflowService WorkflowService) TeamService {
 	return &teamService{
 		teamStore:       teamStore,
 		teamMemberStore: teamMemberStore,
 		userStore:       userStore,
+		workflowService: workflowService,
 	}
 }
 
@@ -82,6 +84,37 @@ func (s *teamService) CreateTeam(ctx context.Context, name, key, description str
 
 	if err := s.teamMemberStore.Add(ctx, member); err != nil {
 		return nil, fmt.Errorf("添加创建者为 Owner 失败: %w", err)
+	}
+
+	// 初始化默认工作流状态
+	// 这里显式指定 Position 且不再重复查询以防竞争
+	defaultStates := []struct {
+		Name     string
+		Type     model.StateType
+		Color    string
+		Position float64
+	}{
+		{"Backlog", model.StateTypeBacklog, "#bec2c8", 1000},
+		{"Todo", model.StateTypeUnstarted, "#e2e2e2", 2000},
+		{"进行中", model.StateTypeStarted, "#f2c94c", 3000},
+		{"已完成", model.StateTypeCompleted, "#5e6ad2", 4000},
+		{"已取消", model.StateTypeCanceled, "#9aa5b1", 5000},
+	}
+
+	for _, ds := range defaultStates {
+		_, err := s.workflowService.CreateState(ctx, &CreateStateParams{
+			TeamID:   team.ID,
+			Name:     ds.Name,
+			Type:     ds.Type,
+			Color:    ds.Color,
+			Position: ds.Position,
+		})
+		if err != nil {
+			// 如果初始化失败，记录但不中断（或者根据策略返回错误）
+			// 这里打印一个日志，如果在集成测试中能看到。
+			// 我们返回错误以保证一致性。
+			return nil, fmt.Errorf("为新团队创建状态 [%s] 失败: %w", ds.Name, err)
+		}
 	}
 
 	return team, nil
