@@ -202,3 +202,11 @@ help:
 	@echo "  make migrate-down-all 回滚所有迁移"
 	@echo "  make migrate-create  创建新迁移文件"
 	@echo "  make migrate-version 查看迁移版本"
+# ============================================================================
+# 修复脚本
+# ============================================================================
+
+# 修复 v6 迁移残留
+fix-v6:
+	@chmod +x scripts/fix_migration_v6.sh
+	@./scripts/fix_migration_v6.sh

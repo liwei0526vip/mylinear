@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,7 +10,7 @@ import (
 
 // Issue 工单模型
 type Issue struct {
-	Model
+	ModelWithSoftDelete
 	TeamID       uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:idx_issue_team_number" json:"team_id"`
 	Number       int            `gorm:"not null;uniqueIndex:idx_issue_team_number" json:"number"`
 	Title        string         `gorm:"type:varchar(500);not null" json:"title"`
@@ -25,6 +26,7 @@ type Issue struct {
 	DueDate      *time.Time     `gorm:"type:date" json:"due_date,omitempty"`
 	SLADueAt     *time.Time     `gorm:"type:timestamptz" json:"sla_due_at,omitempty"`
 	Labels       pq.StringArray `gorm:"type:uuid[];default:'{}'" json:"labels"`
+	Position     float64        `gorm:"not null;default:0" json:"position"`
 	CreatedByID  uuid.UUID      `gorm:"type:uuid;not null;index" json:"created_by_id"`
 	CompletedAt  *time.Time     `gorm:"type:timestamptz" json:"completed_at,omitempty"`
 	CancelledAt  *time.Time     `gorm:"type:timestamptz" json:"cancelled_at,omitempty"`
@@ -43,6 +45,7 @@ type Issue struct {
 	Comments      []Comment       `gorm:"foreignKey:IssueID;constraint:OnDelete:CASCADE" json:"comments,omitempty"`
 	Attachments   []Attachment    `gorm:"foreignKey:IssueID;constraint:OnDelete:CASCADE" json:"attachments,omitempty"`
 	StatusHistory []IssueStatusHistory `gorm:"foreignKey:IssueID;constraint:OnDelete:CASCADE" json:"status_history,omitempty"`
+	Subscribers   []IssueSubscription `gorm:"foreignKey:IssueID;constraint:OnDelete:CASCADE" json:"subscribers,omitempty"`
 }
 
 // TableName 指定表名
@@ -68,7 +71,7 @@ func (i *Issue) IsActive() bool {
 // Identifier 返回 Issue 标识符（如 ENG-123）
 func (i *Issue) Identifier(teamKey string) string {
 	if teamKey == "" {
-		return string(rune(i.Number))
+		return strconv.Itoa(i.Number)
 	}
-	return teamKey + "-" + string(rune(i.Number))
+	return teamKey + "-" + strconv.Itoa(i.Number)
 }
