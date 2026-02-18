@@ -91,3 +91,35 @@ func RegisterLabelRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtService service.JW
 		labelGroup.POST("/teams/:teamId/labels", labelHandler.CreateLabel)
 	}
 }
+
+// RegisterIssueRoutes 注册 Issue 路由
+func RegisterIssueRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtService service.JWTService, issueService service.IssueService) {
+	issueHandler := handler.NewIssueHandler(issueService)
+
+	issueGroup := rg.Group("")
+	issueGroup.Use(func(c *gin.Context) {
+		c.Set("db", db)
+	})
+	issueGroup.Use(middleware.Auth(jwtService))
+	{
+		// 团队内 Issue 操作
+		issueGroup.GET("/teams/:teamId/issues", issueHandler.ListIssues)
+		issueGroup.POST("/teams/:teamId/issues", issueHandler.CreateIssue)
+
+		// Issue CRUD
+		issueGroup.GET("/issues/:id", issueHandler.GetIssue)
+		issueGroup.PUT("/issues/:id", issueHandler.UpdateIssue)
+		issueGroup.DELETE("/issues/:id", issueHandler.DeleteIssue)
+
+		// Issue 位置更新
+		issueGroup.PUT("/issues/:id/position", issueHandler.UpdatePosition)
+
+		// Issue 订阅
+		issueGroup.POST("/issues/:id/subscribe", issueHandler.Subscribe)
+		issueGroup.DELETE("/issues/:id/subscribe", issueHandler.Unsubscribe)
+		issueGroup.GET("/issues/:id/subscribers", issueHandler.ListSubscribers)
+
+		// Issue 恢复
+		issueGroup.POST("/issues/:id/restore", issueHandler.RestoreIssue)
+	}
+}

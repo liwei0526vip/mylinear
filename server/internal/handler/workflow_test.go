@@ -95,11 +95,13 @@ func TestWorkflowHandler_ListStates(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	var resp []model.WorkflowState
+	var resp struct {
+		Data []model.WorkflowState `json:"data"`
+	}
 	err = json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
-	assert.Len(t, resp, 5) // Default 5 states
-	assert.Equal(t, "Backlog", resp[0].Name)
+	assert.Len(t, resp.Data, 5) // Default 5 states
+	assert.Equal(t, "Backlog", resp.Data[0].Name)
 }
 
 func TestWorkflowHandler_CreateState(t *testing.T) {
@@ -145,10 +147,12 @@ func TestWorkflowHandler_CreateState(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 
-	var resp model.WorkflowState
+	var resp struct {
+		Data model.WorkflowState `json:"data"`
+	}
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.Equal(t, "New Handler State", resp.Name)
-	assert.Equal(t, model.StateTypeStarted, resp.Type)
+	assert.Equal(t, "New Handler State", resp.Data.Name)
+	assert.Equal(t, model.StateTypeStarted, resp.Data.Type)
 }
 
 func TestWorkflowHandler_UpdateState(t *testing.T) {
@@ -191,9 +195,11 @@ func TestWorkflowHandler_UpdateState(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	var resp model.WorkflowState
+	var resp struct {
+		Data model.WorkflowState `json:"data"`
+	}
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.Equal(t, newName, resp.Name)
+	assert.Equal(t, newName, resp.Data.Name)
 }
 
 func TestWorkflowHandler_DeleteState(t *testing.T) {

@@ -82,9 +82,11 @@ func TestLabelHandler_ListLabels(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	var resp []model.Label
+	var resp struct {
+		Data []model.Label `json:"data"`
+	}
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.Len(t, resp, 2)
+	assert.Len(t, resp.Data, 2)
 }
 
 func TestLabelHandler_CreateLabel(t *testing.T) {
@@ -127,8 +129,10 @@ func TestLabelHandler_CreateLabel(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	var resp model.Label
+	var resp struct {
+		Data model.Label `json:"data"`
+	}
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.Equal(t, "New Team Label", resp.Name)
-	assert.Equal(t, &team.ID, resp.TeamID)
+	assert.Equal(t, "New Team Label", resp.Data.Name)
+	assert.Equal(t, &team.ID, resp.Data.TeamID)
 }

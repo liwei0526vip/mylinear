@@ -158,8 +158,17 @@ func TestSQLSyntaxBasic(t *testing.T) {
 			}
 
 			// 检查是否有 UUID 主键（仅对 CREATE TABLE）
-			if hasCreate && !strings.Contains(contentStr, "UUID PRIMARY KEY") {
-				t.Errorf("表应该使用 UUID 主键: %s", filepath.Base(file))
+			// 支持两种模式：
+			// 1. 单列主键: UUID PRIMARY KEY
+			// 2. 复合主键: PRIMARY KEY (col1, col2) 其中列使用 UUID 类型
+			if hasCreate {
+				hasUUIDPrimaryKey := strings.Contains(contentStr, "UUID PRIMARY KEY")
+				hasCompositePrimaryKey := strings.Contains(contentUpper, "PRIMARY KEY (") &&
+					strings.Contains(contentUpper, "UUID NOT NULL")
+
+				if !hasUUIDPrimaryKey && !hasCompositePrimaryKey {
+					t.Errorf("表应该使用 UUID 主键（单列或复合主键）: %s", filepath.Base(file))
+				}
 			}
 		})
 	}

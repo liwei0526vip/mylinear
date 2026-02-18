@@ -14,6 +14,9 @@ import (
 // testDB is used by Workflow tests
 var testDB *gorm.DB
 
+// testSvcDB is used by service tests
+var testSvcDB *gorm.DB
+
 // TestMain initializes the DB connection for all service tests
 func TestMain(m *testing.M) {
 	databaseURL := os.Getenv("DATABASE_URL")
@@ -34,7 +37,12 @@ func TestMain(m *testing.M) {
 	// Support existing tests that rely on testTeamServiceDB
 	testTeamServiceDB = testDB
 
+	// Support Issue service tests
+	testSvcDB = testDB
+
 	// 统一清理和迁移
+	testDB.Exec("DROP TABLE IF EXISTS issue_subscriptions CASCADE")
+	testDB.Exec("DROP TABLE IF EXISTS issues CASCADE")
 	testDB.Exec("DROP TABLE IF EXISTS labels CASCADE")
 	testDB.Exec("DROP TABLE IF EXISTS workflow_states CASCADE")
 	testDB.Exec("DROP TABLE IF EXISTS team_members CASCADE")
@@ -49,6 +57,8 @@ func TestMain(m *testing.M) {
 		&model.TeamMember{},
 		&model.WorkflowState{},
 		&model.Label{},
+		&model.Issue{},
+		&model.IssueSubscription{},
 	)
 	if err != nil {
 		fmt.Printf("自动迁移失败: %v\n", err)

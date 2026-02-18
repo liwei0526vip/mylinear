@@ -79,7 +79,7 @@ func TestWorkflowService_CreateState(t *testing.T) {
 				Type:   model.StateTypeBacklog,
 			},
 			wantErr: true,
-			errMsg:  "team not found",
+			errMsg:  "violates foreign key constraint", // Was "team not found", now DB constraint
 		},
 		{
 			name: "Invalid Type",

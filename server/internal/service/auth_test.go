@@ -48,12 +48,25 @@ func setupAuthTest(t *testing.T) (AuthService, context.Context, func()) {
 	// 创建测试工作区
 	var workspace model.Workspace
 	result := db.Where("name = ?", "Auth Test Workspace").First(&workspace)
-	if result.Error == gorm.ErrRecordNotFound {
-		workspace = model.Workspace{
-			Name: "Auth Test Workspace",
-			Slug: "auth-test-workspace",
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			workspace = model.Workspace{
+				Name: "Auth Test Workspace",
+				Slug: "auth-test-workspace",
+			}
+			if err := db.Create(&workspace).Error; err != nil {
+				// 尝试再次查找，可能是并发创建导致的
+				if err2 := db.Where("name = ?", "Auth Test Workspace").First(&workspace).Error; err2 != nil {
+					t.Fatalf("无法创建或找到测试工作区: %v (create err: %v)", err2, err)
+				}
+			}
+		} else {
+			t.Fatalf("查询测试工作区失败: %v", result.Error)
 		}
-		db.Create(&workspace)
+	}
+
+	if workspace.ID == uuid.Nil {
+		t.Fatal("测试工作区 ID 为空")
 	}
 
 	authTestDB = db
@@ -63,7 +76,7 @@ func setupAuthTest(t *testing.T) (AuthService, context.Context, func()) {
 	// 创建服务
 	cfg := &config.Config{
 		JWTSecret:        "auth-test-secret-key",
-		JWTAccessExpiry:  15 * 60 * 1000000000, // 15 分钟
+		JWTAccessExpiry:  15 * 60 * 1000000000,          // 15 分钟
 		JWTRefreshExpiry: 7 * 24 * 60 * 60 * 1000000000, // 7 天
 	}
 
@@ -91,18 +104,18 @@ func TestAuthService_Register_Success(t *testing.T) {
 	prefix := uuid.New().String()[:8]
 
 	tests := []struct {
-		name      string
-		email     string
-		username  string
-		password  string
-		fullName  string
+		name     string
+		email    string
+		username string
+		password string
+		fullName string
 	}{
 		{
-			name:      "成功注册普通用户",
-			email:     prefix + "_register@example.com",
-			username:  prefix + "_registeruser",
-			password:  "SecurePass123!",
-			fullName:  "Register Test User",
+			name:     "成功注册普通用户",
+			email:    prefix + "_register@example.com",
+			username: prefix + "_registeruser",
+			password: "SecurePass123!",
+			fullName: "Register Test User",
 		},
 	}
 

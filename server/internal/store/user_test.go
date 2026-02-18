@@ -37,9 +37,10 @@ func TestMain(m *testing.M) {
 	}
 
 	// 运行迁移（自动迁移测试表）
-	// 运行迁移（自动迁移测试表）
 	// 先清理旧表，避免 schema 不一致
 	// 注意：CASCADE 会删除依赖表，顺序不重要，但全面清理更安全
+	db.Exec("DROP TABLE IF EXISTS issue_subscriptions CASCADE")
+	db.Exec("DROP TABLE IF EXISTS issues CASCADE")
 	db.Exec("DROP TABLE IF EXISTS labels CASCADE")
 	db.Exec("DROP TABLE IF EXISTS workflow_states CASCADE")
 	db.Exec("DROP TABLE IF EXISTS team_members CASCADE")
@@ -55,6 +56,8 @@ func TestMain(m *testing.M) {
 		&model.TeamMember{},
 		&model.WorkflowState{},
 		&model.Label{},
+		&model.Issue{},
+		&model.IssueSubscription{},
 	)
 	if err != nil {
 		fmt.Printf("警告: 自动迁移失败: %v\n", err)
