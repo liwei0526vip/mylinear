@@ -123,3 +123,32 @@ func RegisterIssueRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtService service.JW
 		issueGroup.POST("/issues/:id/restore", issueHandler.RestoreIssue)
 	}
 }
+
+// RegisterProjectRoutes 注册 Project 路由
+func RegisterProjectRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtService service.JWTService, projectService service.ProjectService) {
+	projectHandler := handler.NewProjectHandler(projectService)
+
+	projectGroup := rg.Group("")
+	projectGroup.Use(func(c *gin.Context) {
+		c.Set("db", db)
+	})
+	projectGroup.Use(middleware.Auth(jwtService))
+	{
+		// 工作区内创建项目
+		projectGroup.POST("/workspaces/:workspaceId/projects", projectHandler.CreateProject)
+
+		// 团队项目列表
+		projectGroup.GET("/teams/:teamId/projects", projectHandler.ListTeamProjects)
+
+		// Project CRUD
+		projectGroup.GET("/projects/:id", projectHandler.GetProject)
+		projectGroup.PUT("/projects/:id", projectHandler.UpdateProject)
+		projectGroup.DELETE("/projects/:id", projectHandler.DeleteProject)
+
+		// Project 进度
+		projectGroup.GET("/projects/:id/progress", projectHandler.GetProjectProgress)
+
+		// Project Issue 列表
+		projectGroup.GET("/projects/:id/issues", projectHandler.ListProjectIssues)
+	}
+}

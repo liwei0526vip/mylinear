@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Plus, Trash2, Loader2, Info, Palette, Edit2, Check, X } from 'lucide-react';
+import { Plus, Trash2, Loader2, Info, Palette, Edit2 } from 'lucide-react';
 import type { StateType, WorkflowState } from '../../types/workflow';
 
 interface TeamWorkflowSettingsProps {

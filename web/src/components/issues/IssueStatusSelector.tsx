@@ -4,7 +4,6 @@
 
 import { useEffect } from 'react';
 import { useWorkflowStore } from '@/stores/workflowStore';
-import type { WorkflowState } from '@/types/workflow';
 
 interface IssueStatusSelectorProps {
   teamId: string;

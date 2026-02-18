@@ -7,7 +7,7 @@ import { useLabelStore } from '../../stores/labelStore';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Plus, Trash2, Tag, Loader2, Info, Palette, MoreHorizontal, Check, X } from 'lucide-react';
+import { Plus, Trash2, Tag, Loader2, Info, Palette, Check, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Label as LabelModel } from '../../types/label';
 

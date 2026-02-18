@@ -6,7 +6,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useIssueStore } from '@/stores/issueStore';
 import { useWorkflowStore } from '@/stores/workflowStore';
-import { PriorityIcon, PrioritySelector } from './PriorityIcon';
+import { PrioritySelector } from './PriorityIcon';
 import type { Issue, UpdateIssueRequest, IssuePriority } from '@/types/issue';
 
 interface IssueDetailPanelProps {
@@ -22,7 +22,6 @@ export function IssueDetailPanel({ issueId, onClose, defaultFullscreen = false }
     updateIssue,
     deleteIssue,
     subscribe,
-    unsubscribe,
     fetchSubscribers,
     subscribers,
     isLoading,
@@ -150,7 +149,8 @@ export function IssueDetailPanel({ issueId, onClose, defaultFullscreen = false }
   }
 
   const issue = currentIssue as Issue;
-  const status = states.find((s) => s.id === issue.status_id);
+  // 保留 states 查找逻辑以供后续状态显示使用
+  void states.find((s) => s.id === issue.status_id);
 
   // 全屏模式和侧边栏模式的样式
   const containerClass = isFullscreen

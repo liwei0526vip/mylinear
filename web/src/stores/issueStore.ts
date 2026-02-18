@@ -10,7 +10,6 @@ import type {
   UpdateIssueRequest,
   UpdatePositionRequest,
   IssueSubscriber,
-  IssuePriority,
 } from '../types/issue';
 import * as issueApi from '../api/issue';
 

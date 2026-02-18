@@ -9,15 +9,14 @@ import type { IssueSubscriber } from '@/types/issue';
 interface IssueSubscriberListProps {
   issueId: string;
   onSubscribe?: () => void;
-  onUnsubscribe?: () => void;
+  // 注：onUnsubscribe 待实现
 }
 
 export function IssueSubscriberList({
   issueId,
   onSubscribe,
-  onUnsubscribe,
 }: IssueSubscriberListProps) {
-  const { subscribers, fetchSubscribers, subscribe, unsubscribe, isLoading } = useIssueStore();
+  const { subscribers, fetchSubscribers, subscribe, isLoading } = useIssueStore();
 
   useEffect(() => {
     if (issueId) {
@@ -31,11 +30,7 @@ export function IssueSubscriberList({
     onSubscribe?.();
   };
 
-  const handleUnsubscribe = async () => {
-    await unsubscribe(issueId);
-    fetchSubscribers(issueId);
-    onUnsubscribe?.();
-  };
+  // 注：取消订阅功能待实现，unsubscribe 已在 store 中准备好
 
   return (
     <div className="rounded-lg border border-gray-200 p-3">

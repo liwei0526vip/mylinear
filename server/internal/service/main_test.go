@@ -41,6 +41,7 @@ func TestMain(m *testing.M) {
 	testSvcDB = testDB
 
 	// 统一清理和迁移
+	testDB.Exec("DROP TABLE IF EXISTS projects CASCADE")
 	testDB.Exec("DROP TABLE IF EXISTS issue_subscriptions CASCADE")
 	testDB.Exec("DROP TABLE IF EXISTS issues CASCADE")
 	testDB.Exec("DROP TABLE IF EXISTS labels CASCADE")
@@ -59,6 +60,7 @@ func TestMain(m *testing.M) {
 		&model.Label{},
 		&model.Issue{},
 		&model.IssueSubscription{},
+		&model.Project{},
 	)
 	if err != nil {
 		fmt.Printf("自动迁移失败: %v\n", err)

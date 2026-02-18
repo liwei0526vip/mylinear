@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/liwei0526vip/mylinear/internal/middleware"
 	"github.com/liwei0526vip/mylinear/internal/service"
 )
 
@@ -38,14 +39,14 @@ func (h *IssueHandler) CreateIssue(c *gin.Context) {
 	}
 
 	var req struct {
-		Title       string  `json:"title" binding:"required"`
-		Description *string `json:"description"`
-		StatusID    string  `json:"status_id"`
-		Priority    int     `json:"priority"`
-		AssigneeID  *string `json:"assignee_id"`
-		ProjectID   *string `json:"project_id"`
+		Title       string   `json:"title" binding:"required"`
+		Description *string  `json:"description"`
+		StatusID    string   `json:"status_id"`
+		Priority    int      `json:"priority"`
+		AssigneeID  *string  `json:"assignee_id"`
+		ProjectID   *string  `json:"project_id"`
 		Labels      []string `json:"labels"`
-		DueDate     *string `json:"due_date"`
+		DueDate     *string  `json:"due_date"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -379,12 +380,13 @@ func (h *IssueHandler) contextWithAuth(c *gin.Context) context.Context {
 	ctx := c.Request.Context()
 
 	// 从 Gin Context 获取用户信息
-	if userID, exists := c.Get("user_id"); exists {
-		if uid, err := uuid.Parse(userID.(string)); err == nil {
-			ctx = context.WithValue(ctx, "user_id", uid)
-		}
+	userID := middleware.GetCurrentUserID(c)
+	if userID != uuid.Nil {
+		ctx = context.WithValue(ctx, "user_id", userID)
 	}
-	if userRole, exists := c.Get("user_role"); exists {
+
+	userRole := middleware.GetCurrentUserRole(c)
+	if userRole != "" {
 		ctx = context.WithValue(ctx, "user_role", userRole)
 	}
 

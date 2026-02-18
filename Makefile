@@ -69,7 +69,7 @@ test: test-backend test-frontend
 # 运行后端测试
 test-backend:
 	@echo "$(GREEN)运行后端测试...$(NC)"
-	cd server && go test -v ./...
+	cd server && go test -v -p 1 ./...
 
 # 运行前端测试
 test-frontend:

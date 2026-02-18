@@ -93,6 +93,8 @@ func main() {
 		workspaceStore := store.NewWorkspaceStore(db)
 		teamStore := store.NewTeamStore(db)
 		teamMemberStore := store.NewTeamMemberStore(db)
+		issueStore := store.NewIssueStore(db)
+		issueSubscriptionStore := store.NewIssueSubscriptionStore(db)
 
 		// 初始化服务
 		jwtService := service.NewJWTService(cfg)
@@ -110,6 +112,13 @@ func main() {
 		// Label Service
 		labelStore := store.NewLabelStore(db)
 		labelService := service.NewLabelService(labelStore)
+
+		// Issue Service
+		issueService := service.NewIssueService(issueStore, issueSubscriptionStore, teamMemberStore)
+
+		// Project Service
+		projectStore := store.NewProjectStore(db)
+		projectService := service.NewProjectService(projectStore, teamMemberStore, userStore)
 
 		// 初始化 AvatarService（可选，需要 MinIO）
 		var avatarService service.AvatarService
@@ -166,6 +175,12 @@ func main() {
 
 		// 注册 Label 路由
 		apiRouter.RegisterLabelRoutes(v1, db, jwtService, labelService, teamStore)
+
+		// 注册 Project 路由
+		apiRouter.RegisterProjectRoutes(v1, db, jwtService, projectService)
+
+		// 注册 Issue 路由
+		apiRouter.RegisterIssueRoutes(v1, db, jwtService, issueService)
 	} else {
 		log.Println("警告: 数据库不可用，认证和用户 API 不可用")
 	}

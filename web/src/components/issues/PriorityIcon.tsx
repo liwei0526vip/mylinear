@@ -3,7 +3,8 @@
  * 参考 Linear 的优先级图标设计
  */
 
-import { IssuePriority, getPriorityConfig } from '@/types/issue';
+import type { IssuePriority } from '@/types/issue';
+import { getPriorityConfig } from '@/types/issue';
 
 interface PriorityIconProps {
   priority: IssuePriority;

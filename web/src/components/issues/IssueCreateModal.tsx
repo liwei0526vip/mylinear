@@ -5,9 +5,8 @@
 import { useState, useEffect } from 'react';
 import { useIssueStore } from '@/stores/issueStore';
 import { useWorkflowStore } from '@/stores/workflowStore';
-import { PriorityIcon, PrioritySelector } from './PriorityIcon';
+import { PrioritySelector } from './PriorityIcon';
 import type { CreateIssueRequest, IssuePriority } from '@/types/issue';
-import type { WorkflowState } from '@/types/workflow';
 
 interface IssueCreateModalProps {
   teamId: string;

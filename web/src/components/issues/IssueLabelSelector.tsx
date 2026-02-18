@@ -4,7 +4,6 @@
 
 import { useEffect, useState } from 'react';
 import { useLabelStore } from '@/stores/labelStore';
-import type { Label } from '@/types/label';
 
 interface IssueLabelSelectorProps {
   teamId: string;

@@ -3,12 +3,15 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAppStore } from '@/stores/app-store'
 import { checkHealth } from '@/api/client'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { MainLayout } from '@/components/layout'
 import LoginPage from '@/pages/Login'
 import RegisterPage from '@/pages/Register'
 import ProfilePage from '@/pages/Profile'
 import { WorkspaceSettingsPage } from '@/pages/Settings/Workspace'
 import { TeamsPage } from '@/pages/Settings/Teams'
 import { TeamDetailPage } from '@/pages/Settings/TeamDetail'
+import { ProjectsPage } from '@/pages/ProjectsPage'
+import { ProjectDetailPage } from '@/pages/ProjectDetailPage'
 
 function HomePage() {
   const { backendStatus, setBackendStatus } = useAppStore()
@@ -77,16 +80,32 @@ function HomePage() {
 function App() {
   return (
     <Routes>
-      {/* 公开路由 */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      {/* 公开路由（不使用侧边栏） */}
+      <Route
+        path="/login"
+        element={
+          <MainLayout showSidebar={false}>
+            <LoginPage />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <MainLayout showSidebar={false}>
+            <RegisterPage />
+          </MainLayout>
+        }
+      />
 
-      {/* 受保护路由 */}
+      {/* 受保护路由（使用侧边栏） */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <HomePage />
+            <MainLayout>
+              <HomePage />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
@@ -94,7 +113,9 @@ function App() {
         path="/settings/profile"
         element={
           <ProtectedRoute>
-            <ProfilePage />
+            <MainLayout>
+              <ProfilePage />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
@@ -102,7 +123,9 @@ function App() {
         path="/settings/workspace"
         element={
           <ProtectedRoute>
-            <WorkspaceSettingsPage />
+            <MainLayout>
+              <WorkspaceSettingsPage />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
@@ -110,7 +133,9 @@ function App() {
         path="/settings/teams"
         element={
           <ProtectedRoute>
-            <TeamsPage />
+            <MainLayout>
+              <TeamsPage />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
@@ -118,7 +143,31 @@ function App() {
         path="/settings/teams/:teamId"
         element={
           <ProtectedRoute>
-            <TeamDetailPage />
+            <MainLayout>
+              <TeamDetailPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 项目路由 */}
+      <Route
+        path="/teams/:teamId/projects"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ProjectsPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectId"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ProjectDetailPage />
+            </MainLayout>
           </ProtectedRoute>
         }
       />

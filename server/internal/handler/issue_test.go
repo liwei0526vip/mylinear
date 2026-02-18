@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/liwei0526vip/mylinear/internal/middleware"
 	"github.com/liwei0526vip/mylinear/internal/model"
 	"github.com/liwei0526vip/mylinear/internal/service"
 	"github.com/liwei0526vip/mylinear/internal/store"
@@ -480,13 +481,13 @@ func TestIssueHandler_Subscribe(t *testing.T) {
 // =============================================================================
 
 type issueHandlerFixtures struct {
-	handler       *IssueHandler
-	issueService  service.IssueService
-	team          *model.Team
-	status        *model.WorkflowState
-	userID        uuid.UUID
-	userRole      model.Role
-	authCtx       context.Context
+	handler      *IssueHandler
+	issueService service.IssueService
+	team         *model.Team
+	status       *model.WorkflowState
+	userID       uuid.UUID
+	userRole     model.Role
+	authCtx      context.Context
 }
 
 func setupIssueHandlerFixtures(t *testing.T, db *gorm.DB) *issueHandlerFixtures {
@@ -576,6 +577,8 @@ func setupIssueHandlerFixtures(t *testing.T, db *gorm.DB) *issueHandlerFixtures 
 
 // setAuthContext 设置认证上下文
 func setAuthContext(c *gin.Context, userID uuid.UUID, userRole model.Role) {
-	c.Set("user_id", userID.String())
-	c.Set("user_role", string(userRole))
+	c.Set(middleware.ContextKeyUser, &middleware.UserContext{
+		UserID: userID.String(),
+		Role:   string(userRole),
+	})
 }
