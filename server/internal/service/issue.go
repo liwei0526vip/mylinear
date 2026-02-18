@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -63,6 +64,7 @@ type issueService struct {
 	issueStore        store.IssueStore
 	subscriptionStore store.IssueSubscriptionStore
 	teamMemberStore   store.TeamMemberStore
+	activityService   ActivityService
 }
 
 // NewIssueService 创建 Issue 服务实例
@@ -71,6 +73,17 @@ func NewIssueService(issueStore store.IssueStore, subscriptionStore store.IssueS
 		issueStore:        issueStore,
 		subscriptionStore: subscriptionStore,
 		teamMemberStore:   teamMemberStore,
+		activityService:   nil, // 不记录活动
+	}
+}
+
+// NewIssueServiceWithActivity 创建带活动记录的 Issue 服务实例
+func NewIssueServiceWithActivity(issueStore store.IssueStore, subscriptionStore store.IssueSubscriptionStore, teamMemberStore store.TeamMemberStore, activityService ActivityService) IssueService {
+	return &issueService{
+		issueStore:        issueStore,
+		subscriptionStore: subscriptionStore,
+		teamMemberStore:   teamMemberStore,
+		activityService:   activityService,
 	}
 }
 
@@ -115,6 +128,18 @@ func (s *issueService) CreateIssue(ctx context.Context, params *CreateIssueParam
 	// 创建者自动订阅
 	if err := s.subscriptionStore.Subscribe(ctx, issue.ID, userID); err != nil {
 		// 订阅失败不影响创建，记录日志即可
+	}
+
+	// 记录 Issue 创建活动
+	if s.activityService != nil {
+		activity := &model.Activity{
+			IssueID: issue.ID,
+			Type:    model.ActivityIssueCreated,
+			ActorID: userID,
+		}
+		if err := s.activityService.RecordActivity(ctx, activity); err != nil {
+			// 活动记录失败不影响创建
+		}
 	}
 
 	return issue, nil
@@ -189,36 +214,76 @@ func (s *issueService) UpdateIssue(ctx context.Context, issueID string, updates 
 		return nil, fmt.Errorf("无效的 Issue ID")
 	}
 
+	// 获取当前用户信息
+	userID, _ := ctx.Value("user_id").(uuid.UUID)
+
 	// 获取现有 Issue
 	issue, err := s.issueStore.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("Issue 不存在")
 	}
 
+	// 记录变更前的值用于活动记录
+	oldTitle := issue.Title
+	oldDescription := issue.Description
+	oldStatusID := issue.StatusID
+	oldPriority := issue.Priority
+	oldAssigneeID := issue.AssigneeID
+
 	// 应用更新
+	hasTitleChange := false
+	hasDescriptionChange := false
+	hasStatusChange := false
+	hasPriorityChange := false
+	hasAssigneeChange := false
+
 	if title, ok := updates["title"].(string); ok {
-		issue.Title = title
+		if title != oldTitle {
+			issue.Title = title
+			hasTitleChange = true
+		}
 	}
 	if description, ok := updates["description"].(string); ok {
-		issue.Description = &description
+		oldDesc := ""
+		if oldDescription != nil {
+			oldDesc = *oldDescription
+		}
+		if description != oldDesc {
+			issue.Description = &description
+			hasDescriptionChange = true
+		}
 	}
 	if priority, ok := updates["priority"].(int); ok {
-		issue.Priority = priority
+		if priority != oldPriority {
+			issue.Priority = priority
+			hasPriorityChange = true
+		}
 	}
 	if priorityFloat, ok := updates["priority"].(float64); ok {
-		issue.Priority = int(priorityFloat)
+		priority := int(priorityFloat)
+		if priority != oldPriority {
+			issue.Priority = priority
+			hasPriorityChange = true
+		}
 	}
 	if assigneeID, ok := updates["assignee_id"].(string); ok {
-		if assigneeID == "" {
-			issue.AssigneeID = nil
-		} else {
-			assigneeUUID, _ := uuid.Parse(assigneeID)
-			issue.AssigneeID = &assigneeUUID
+		var newAssigneeID *uuid.UUID
+		if assigneeID != "" {
+			parsed, _ := uuid.Parse(assigneeID)
+			newAssigneeID = &parsed
+		}
+		// 比较是否变更
+		if !uuidPtrEqual(oldAssigneeID, newAssigneeID) {
+			issue.AssigneeID = newAssigneeID
+			hasAssigneeChange = true
 		}
 	}
 	if statusID, ok := updates["status_id"].(string); ok {
 		statusUUID, _ := uuid.Parse(statusID)
-		issue.StatusID = statusUUID
+		if statusUUID != oldStatusID {
+			issue.StatusID = statusUUID
+			hasStatusChange = true
+		}
 	}
 
 	// 保存更新
@@ -226,7 +291,106 @@ func (s *issueService) UpdateIssue(ctx context.Context, issueID string, updates 
 		return nil, fmt.Errorf("更新 Issue 失败: %w", err)
 	}
 
+	// 记录活动
+	if s.activityService != nil {
+		// 标题变更
+		if hasTitleChange {
+			s.recordActivity(ctx, issue.ID, userID, model.ActivityTitleChanged, &model.ActivityPayloadTitle{
+				OldValue: oldTitle,
+				NewValue: issue.Title,
+			})
+		}
+
+		// 描述变更
+		if hasDescriptionChange {
+			oldDesc := ""
+			if oldDescription != nil {
+				oldDesc = *oldDescription
+			}
+			newDesc := ""
+			if issue.Description != nil {
+				newDesc = *issue.Description
+			}
+			s.recordActivity(ctx, issue.ID, userID, model.ActivityDescriptionChanged, &model.ActivityPayloadDescription{
+				OldValue: oldDesc,
+				NewValue: newDesc,
+			})
+		}
+
+		// 状态变更
+		if hasStatusChange {
+			// TODO: 查询状态详情以填充名称和颜色
+			s.recordActivity(ctx, issue.ID, userID, model.ActivityStatusChanged, &model.ActivityPayloadStatus{
+				NewStatus: &model.ActivityStatusRef{
+					ID: issue.StatusID,
+				},
+			})
+		}
+
+		// 优先级变更
+		if hasPriorityChange {
+			s.recordActivity(ctx, issue.ID, userID, model.ActivityPriorityChanged, &model.ActivityPayloadPriority{
+				OldValue: oldPriority,
+				NewValue: issue.Priority,
+			})
+		}
+
+		// 负责人变更
+		if hasAssigneeChange {
+			payload := &model.ActivityPayloadAssignee{}
+			if oldAssigneeID != nil {
+				payload.OldAssignee = &model.ActivityPayloadUser{
+					ID: *oldAssigneeID,
+				}
+			}
+			if issue.AssigneeID != nil {
+				payload.NewAssignee = &model.ActivityPayloadUser{
+					ID: *issue.AssigneeID,
+				}
+			}
+			s.recordActivity(ctx, issue.ID, userID, model.ActivityAssigneeChanged, payload)
+		}
+	}
+
 	return issue, nil
+}
+
+// recordActivity 记录活动的辅助方法
+func (s *issueService) recordActivity(ctx context.Context, issueID, actorID uuid.UUID, activityType model.ActivityType, payload interface{}) {
+	if s.activityService == nil {
+		return
+	}
+
+	activity := &model.Activity{
+		IssueID: issueID,
+		Type:    activityType,
+		ActorID: actorID,
+	}
+
+	if payload != nil {
+		payloadBytes, err := jsonMarshal(payload)
+		if err == nil {
+			activity.Payload = payloadBytes
+		}
+	}
+
+	_ = s.activityService.RecordActivity(ctx, activity)
+}
+
+// uuidPtrEqual 比较两个 uuid 指针是否相等
+func uuidPtrEqual(a, b *uuid.UUID) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return *a == *b
+}
+
+// jsonMarshal 序列化 JSON
+func jsonMarshal(v interface{}) ([]byte, error) {
+	return json.Marshal(v)
 }
 
 // DeleteIssue 删除 Issue

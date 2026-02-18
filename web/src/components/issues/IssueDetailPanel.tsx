@@ -1,21 +1,28 @@
 /**
  * IssueDetailPanel 组件 - 右侧 Issue 详情面板
- * 支持全屏模式切换
+ * 支持全屏模式切换和评论/活动 Tab
  */
 
 import { useEffect, useState, useCallback } from 'react';
 import { useIssueStore } from '@/stores/issueStore';
 import { useWorkflowStore } from '@/stores/workflowStore';
+import { useAuthStore } from '@/stores/authStore';
 import { PrioritySelector } from './PriorityIcon';
+import { CommentSection } from '@/components/comments';
+import { ActivityTimeline } from '@/components/activities';
 import type { Issue, UpdateIssueRequest, IssuePriority } from '@/types/issue';
+
+// Tab 类型
+type DetailTab = 'comments' | 'activity';
 
 interface IssueDetailPanelProps {
   issueId: string;
   onClose: () => void;
   defaultFullscreen?: boolean;
+  defaultTab?: DetailTab;
 }
 
-export function IssueDetailPanel({ issueId, onClose, defaultFullscreen = false }: IssueDetailPanelProps) {
+export function IssueDetailPanel({ issueId, onClose, defaultFullscreen = false, defaultTab = 'comments' }: IssueDetailPanelProps) {
   const {
     currentIssue,
     fetchIssue,
@@ -29,11 +36,13 @@ export function IssueDetailPanel({ issueId, onClose, defaultFullscreen = false }
   } = useIssueStore();
 
   const { states, fetchStates } = useWorkflowStore();
+  const { user } = useAuthStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(defaultFullscreen);
+  const [activeTab, setActiveTab] = useState<DetailTab>(defaultTab);
 
   // 获取 Issue 详情
   useEffect(() => {
@@ -149,8 +158,6 @@ export function IssueDetailPanel({ issueId, onClose, defaultFullscreen = false }
   }
 
   const issue = currentIssue as Issue;
-  // 保留 states 查找逻辑以供后续状态显示使用
-  void states.find((s) => s.id === issue.status_id);
 
   // 全屏模式和侧边栏模式的样式
   const containerClass = isFullscreen
@@ -196,118 +203,162 @@ export function IssueDetailPanel({ issueId, onClose, defaultFullscreen = false }
         </div>
       </div>
 
-      {/* 内容区 - 全屏模式居中显示 */}
-      <div className={`flex-1 overflow-y-auto ${isFullscreen ? 'mx-auto w-full max-w-3xl p-6' : 'p-4'}`}>
-        {/* 标题 */}
-        {isEditing ? (
-          <div className="mb-4">
-            <input
-              type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              className="w-full rounded border border-gray-300 px-2 py-1 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              autoFocus
-            />
-            <textarea
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-              placeholder="添加描述..."
-              rows={4}
-              className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <div className="mt-2 flex gap-2">
-              <button
-                onClick={handleSaveEdit}
-                className="rounded bg-indigo-500 px-3 py-1 text-sm text-white hover:bg-indigo-600"
+      {/* 内容区 */}
+      <div className="flex-1 overflow-y-auto">
+        {/* 标题和属性区 */}
+        <div className={`${isFullscreen ? 'mx-auto max-w-3xl px-6' : 'px-4'} py-4`}>
+          {/* 标题 */}
+          {isEditing ? (
+            <div className="mb-4">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full rounded border border-gray-300 px-2 py-1 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                autoFocus
+              />
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="添加描述..."
+                rows={4}
+                className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={handleSaveEdit}
+                  className="rounded bg-indigo-500 px-3 py-1 text-sm text-white hover:bg-indigo-600"
+                >
+                  保存
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="rounded px-3 py-1 text-sm text-gray-600 hover:bg-gray-100"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-4">
+              <h2
+                className="cursor-pointer text-lg font-medium hover:bg-gray-50"
+                onClick={() => setIsEditing(true)}
               >
-                保存
-              </button>
-              <button
-                onClick={() => setIsEditing(false)}
-                className="rounded px-3 py-1 text-sm text-gray-600 hover:bg-gray-100"
+                {issue.title}
+              </h2>
+              {issue.description && (
+                <p className="mt-2 text-sm text-gray-600">{issue.description}</p>
+              )}
+            </div>
+          )}
+
+          {/* 属性区 */}
+          <div className="space-y-3 border-t border-gray-100 pt-4">
+            {/* 状态 */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">状态</span>
+              <select
+                value={issue.status_id}
+                onChange={(e) => handleUpdate({ status_id: e.target.value })}
+                className="h-7 rounded border border-gray-200 bg-white px-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
               >
-                取消
-              </button>
+                {states.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 优先级 */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">优先级</span>
+              <PrioritySelector
+                value={issue.priority}
+                onChange={(p: IssuePriority) => handleUpdate({ priority: p })}
+              />
+            </div>
+
+            {/* 创建者 */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">创建者</span>
+              <span className="text-sm">{issue.created_by_user?.name || '未知'}</span>
+            </div>
+
+            {/* 创建时间 */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">创建时间</span>
+              <span className="text-sm text-gray-600">
+                {new Date(issue.created_at).toLocaleDateString('zh-CN')}
+              </span>
             </div>
           </div>
-        ) : (
-          <div className="mb-4">
-            <h2
-              className="cursor-pointer text-lg font-medium hover:bg-gray-50"
-              onClick={() => setIsEditing(true)}
-            >
-              {issue.title}
-            </h2>
-            {issue.description && (
-              <p className="mt-2 text-sm text-gray-600">{issue.description}</p>
-            )}
-          </div>
-        )}
 
-        {/* 属性区 */}
-        <div className="space-y-3 border-t border-gray-100 pt-4">
-          {/* 状态 */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">状态</span>
-            <select
-              value={issue.status_id}
-              onChange={(e) => handleUpdate({ status_id: e.target.value })}
-              className="h-7 rounded border border-gray-200 bg-white px-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              {states.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
+          {/* 订阅者 */}
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">订阅者 ({subscribers.length})</span>
+              <button
+                onClick={handleToggleSubscribe}
+                className="text-xs text-indigo-500 hover:text-indigo-600"
+              >
+                订阅
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {subscribers.map((sub) => (
+                <div
+                  key={sub.id}
+                  className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1"
+                >
+                  <div className="h-5 w-5 rounded-full bg-gray-300" />
+                  <span className="text-xs">{sub.name}</span>
+                </div>
               ))}
-            </select>
-          </div>
-
-          {/* 优先级 */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">优先级</span>
-            <PrioritySelector
-              value={issue.priority}
-              onChange={(p: IssuePriority) => handleUpdate({ priority: p })}
-            />
-          </div>
-
-          {/* 创建者 */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">创建者</span>
-            <span className="text-sm">{issue.created_by_user?.name || '未知'}</span>
-          </div>
-
-          {/* 创建时间 */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">创建时间</span>
-            <span className="text-sm text-gray-600">
-              {new Date(issue.created_at).toLocaleDateString('zh-CN')}
-            </span>
+            </div>
           </div>
         </div>
 
-        {/* 订阅者 */}
-        <div className="mt-4 border-t border-gray-100 pt-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">订阅者 ({subscribers.length})</span>
+        {/* Tab 切换 */}
+        <div className="border-t border-gray-100">
+          <div className="flex">
             <button
-              onClick={handleToggleSubscribe}
-              className="text-xs text-indigo-500 hover:text-indigo-600"
+              onClick={() => setActiveTab('comments')}
+              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === 'comments'
+                  ? 'border-b-2 border-indigo-500 text-indigo-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
-              订阅
+              评论
+            </button>
+            <button
+              onClick={() => setActiveTab('activity')}
+              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === 'activity'
+                  ? 'border-b-2 border-indigo-500 text-indigo-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              活动
             </button>
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {subscribers.map((sub) => (
-              <div
-                key={sub.id}
-                className="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1"
-              >
-                <div className="h-5 w-5 rounded-full bg-gray-300" />
-                <span className="text-xs">{sub.name}</span>
-              </div>
-            ))}
-          </div>
+        </div>
+
+        {/* Tab 内容 */}
+        <div className="flex-1">
+          {activeTab === 'comments' ? (
+            <CommentSection
+              issueId={issueId}
+              currentUserId={user?.id}
+            />
+          ) : (
+            <ActivityTimeline
+              issueId={issueId}
+              showFilter={true}
+            />
+          )}
         </div>
       </div>
 

@@ -264,6 +264,57 @@ func (n NotificationType) Value() (driver.Value, error) {
 	return string(n), nil
 }
 
+// ActivityType 活动类型
+type ActivityType string
+
+const (
+	ActivityIssueCreated       ActivityType = "issue_created"        // Issue 创建
+	ActivityTitleChanged       ActivityType = "title_changed"        // 标题变更
+	ActivityDescriptionChanged ActivityType = "description_changed"  // 描述变更
+	ActivityStatusChanged      ActivityType = "status_changed"       // 状态变更
+	ActivityPriorityChanged    ActivityType = "priority_changed"     // 优先级变更
+	ActivityAssigneeChanged    ActivityType = "assignee_changed"     // 负责人变更
+	ActivityDueDateChanged     ActivityType = "due_date_changed"     // 截止日期变更
+	ActivityProjectChanged     ActivityType = "project_changed"      // 项目变更
+	ActivityLabelsChanged      ActivityType = "labels_changed"       // 标签变更
+	ActivityCommentAdded       ActivityType = "comment_added"        // 评论添加
+)
+
+// Valid 验证活动类型是否有效
+func (a ActivityType) Valid() bool {
+	switch a {
+	case ActivityIssueCreated, ActivityTitleChanged, ActivityDescriptionChanged,
+		ActivityStatusChanged, ActivityPriorityChanged, ActivityAssigneeChanged,
+		ActivityDueDateChanged, ActivityProjectChanged, ActivityLabelsChanged,
+		ActivityCommentAdded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Scan 实现 sql.Scanner 接口
+func (a *ActivityType) Scan(value interface{}) error {
+	if value == nil {
+		*a = ""
+		return nil
+	}
+	switch v := value.(type) {
+	case string:
+		*a = ActivityType(v)
+	case []byte:
+		*a = ActivityType(v)
+	default:
+		return fmt.Errorf("无法扫描 ActivityType 类型: %T", value)
+	}
+	return nil
+}
+
+// Value 实现 driver.Valuer 接口
+func (a ActivityType) Value() (driver.Value, error) {
+	return string(a), nil
+}
+
 // Issue 优先级常量
 const (
 	PriorityNone   = 0 // 无优先级

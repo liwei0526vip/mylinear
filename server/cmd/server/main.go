@@ -95,6 +95,8 @@ func main() {
 		teamMemberStore := store.NewTeamMemberStore(db)
 		issueStore := store.NewIssueStore(db)
 		issueSubscriptionStore := store.NewIssueSubscriptionStore(db)
+		activityStore := store.NewActivityStore(db)
+		commentStore := store.NewCommentStore(db)
 
 		// 初始化服务
 		jwtService := service.NewJWTService(cfg)
@@ -113,8 +115,14 @@ func main() {
 		labelStore := store.NewLabelStore(db)
 		labelService := service.NewLabelService(labelStore)
 
-		// Issue Service
-		issueService := service.NewIssueService(issueStore, issueSubscriptionStore, teamMemberStore)
+		// Activity Service
+		activityService := service.NewActivityService(activityStore)
+
+		// Issue Service (with Activity recording)
+		issueService := service.NewIssueServiceWithActivity(issueStore, issueSubscriptionStore, teamMemberStore, activityService)
+
+		// Comment Service
+		commentService := service.NewCommentService(commentStore, issueStore, issueSubscriptionStore, userStore)
 
 		// Project Service
 		projectStore := store.NewProjectStore(db)
@@ -181,6 +189,12 @@ func main() {
 
 		// 注册 Issue 路由
 		apiRouter.RegisterIssueRoutes(v1, db, jwtService, issueService)
+
+		// 注册 Comment 路由
+		apiRouter.RegisterCommentRoutes(v1, db, jwtService, commentService)
+
+		// 注册 Activity 路由
+		apiRouter.RegisterActivityRoutes(v1, db, jwtService, activityService)
 	} else {
 		log.Println("警告: 数据库不可用，认证和用户 API 不可用")
 	}

@@ -152,3 +152,38 @@ func RegisterProjectRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtService service.
 		projectGroup.GET("/projects/:id/issues", projectHandler.ListProjectIssues)
 	}
 }
+
+// RegisterCommentRoutes 注册 Comment 路由
+func RegisterCommentRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtService service.JWTService, commentService service.CommentService) {
+	commentHandler := handler.NewCommentHandler(commentService)
+
+	commentGroup := rg.Group("")
+	commentGroup.Use(func(c *gin.Context) {
+		c.Set("db", db)
+	})
+	commentGroup.Use(middleware.Auth(jwtService))
+	{
+		// Issue 评论 (使用 :id 参数名与 Issue 路由一致)
+		commentGroup.GET("/issues/:id/comments", commentHandler.ListIssueComments)
+		commentGroup.POST("/issues/:id/comments", commentHandler.CreateComment)
+
+		// 评论 CRUD
+		commentGroup.PUT("/comments/:commentId", commentHandler.UpdateComment)
+		commentGroup.DELETE("/comments/:commentId", commentHandler.DeleteComment)
+	}
+}
+
+// RegisterActivityRoutes 注册 Activity 路由
+func RegisterActivityRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtService service.JWTService, activityService service.ActivityService) {
+	activityHandler := handler.NewActivityHandler(activityService)
+
+	activityGroup := rg.Group("")
+	activityGroup.Use(func(c *gin.Context) {
+		c.Set("db", db)
+	})
+	activityGroup.Use(middleware.Auth(jwtService))
+	{
+		// Issue 活动 (使用 :id 参数名与 Issue 路由一致)
+		activityGroup.GET("/issues/:id/activities", activityHandler.ListIssueActivities)
+	}
+}

@@ -159,7 +159,25 @@ func (s *issueStore) List(ctx context.Context, teamID uuid.UUID, filter *IssueFi
 
 // Update 更新 Issue
 func (s *issueStore) Update(ctx context.Context, issue *model.Issue) error {
-	return s.db.WithContext(ctx).Save(issue).Error
+	// 使用 Session 配置跳过钩子更新指定字段，避免关联对象干扰
+	return s.db.WithContext(ctx).Model(issue).Select(
+		"Title",
+		"Description",
+		"StatusID",
+		"Priority",
+		"AssigneeID",
+		"ProjectID",
+		"MilestoneID",
+		"CycleID",
+		"ParentID",
+		"Estimate",
+		"DueDate",
+		"SLADueAt",
+		"Labels",
+		"Position",
+		"CompletedAt",
+		"CancelledAt",
+	).Updates(issue).Error
 }
 
 // SoftDelete 软删除 Issue

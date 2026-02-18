@@ -9,6 +9,7 @@ Thumbs.db
 # ----- Go 后端 -----
 server/bin/
 server/tmp/
+server/server
 *.exe
 *.exe~
 *.dll
