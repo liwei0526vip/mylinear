@@ -12,6 +12,7 @@ import { TeamsPage } from '@/pages/Settings/Teams'
 import { TeamDetailPage } from '@/pages/Settings/TeamDetail'
 import { ProjectsPage } from '@/pages/ProjectsPage'
 import { ProjectDetailPage } from '@/pages/ProjectDetailPage'
+import { InboxPage } from '@/pages/inbox/InboxPage'
 
 function HomePage() {
   const { backendStatus, setBackendStatus } = useAppStore()
@@ -167,6 +168,18 @@ function App() {
           <ProtectedRoute>
             <MainLayout>
               <ProjectDetailPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 通知路由 */}
+      <Route
+        path="/inbox"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <InboxPage />
             </MainLayout>
           </ProtectedRoute>
         }

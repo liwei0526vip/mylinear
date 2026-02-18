@@ -220,13 +220,14 @@ func (c CycleStatus) Value() (driver.Value, error) {
 type NotificationType string
 
 const (
-	NotificationTypeIssueAssigned      NotificationType = "issue_assigned"       // Issue 分配
-	NotificationTypeIssueMentioned     NotificationType = "issue_mentioned"      // Issue 提及
-	NotificationTypeIssueCommented     NotificationType = "issue_commented"      // Issue 评论
-	NotificationTypeIssueStatusChanged NotificationType = "issue_status_changed" // Issue 状态变更
-	NotificationTypeProjectUpdated     NotificationType = "project_updated"      // 项目更新
-	NotificationTypeCycleStarted       NotificationType = "cycle_started"        // 迭代开始
-	NotificationTypeCycleEnded         NotificationType = "cycle_ended"          // 迭代结束
+	NotificationTypeIssueAssigned       NotificationType = "issue_assigned"        // Issue 分配
+	NotificationTypeIssueMentioned      NotificationType = "issue_mentioned"       // Issue 提及
+	NotificationTypeIssueCommented      NotificationType = "issue_commented"       // Issue 评论
+	NotificationTypeIssueStatusChanged  NotificationType = "issue_status_changed"  // Issue 状态变更
+	NotificationTypeIssuePriorityChanged NotificationType = "issue_priority_changed" // Issue 优先级变更
+	NotificationTypeProjectUpdated      NotificationType = "project_updated"       // 项目更新
+	NotificationTypeCycleStarted        NotificationType = "cycle_started"         // 迭代开始
+	NotificationTypeCycleEnded          NotificationType = "cycle_ended"           // 迭代结束
 )
 
 // Valid 验证通知类型是否有效
@@ -234,8 +235,8 @@ func (n NotificationType) Valid() bool {
 	switch n {
 	case NotificationTypeIssueAssigned, NotificationTypeIssueMentioned,
 		NotificationTypeIssueCommented, NotificationTypeIssueStatusChanged,
-		NotificationTypeProjectUpdated, NotificationTypeCycleStarted,
-		NotificationTypeCycleEnded:
+		NotificationTypeIssuePriorityChanged, NotificationTypeProjectUpdated,
+		NotificationTypeCycleStarted, NotificationTypeCycleEnded:
 		return true
 	default:
 		return false

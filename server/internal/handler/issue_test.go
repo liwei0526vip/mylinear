@@ -43,6 +43,8 @@ func TestMain(m *testing.M) {
 	}
 
 	// 清理和迁移
+	testHandlerDB.Exec("DROP TABLE IF EXISTS notification_preferences CASCADE")
+	testHandlerDB.Exec("DROP TABLE IF EXISTS notifications CASCADE")
 	testHandlerDB.Exec("DROP TABLE IF EXISTS issue_subscriptions CASCADE")
 	testHandlerDB.Exec("DROP TABLE IF EXISTS issues CASCADE")
 	testHandlerDB.Exec("DROP TABLE IF EXISTS labels CASCADE")
@@ -61,6 +63,8 @@ func TestMain(m *testing.M) {
 		&model.Label{},
 		&model.Issue{},
 		&model.IssueSubscription{},
+		&model.Notification{},
+		&model.NotificationPreference{},
 	)
 	if err != nil {
 		fmt.Printf("自动迁移失败: %v\n", err)

@@ -52,6 +52,8 @@ func TestMain(m *testing.M) {
 	testDB.Exec("DROP TABLE IF EXISTS teams CASCADE")
 	testDB.Exec("DROP TABLE IF EXISTS users CASCADE")
 	testDB.Exec("DROP TABLE IF EXISTS workspaces CASCADE")
+	testDB.Exec("DROP TABLE IF EXISTS notification_preferences CASCADE")
+	testDB.Exec("DROP TABLE IF EXISTS notifications CASCADE")
 
 	err = testDB.AutoMigrate(
 		&model.Workspace{},
@@ -65,6 +67,8 @@ func TestMain(m *testing.M) {
 		&model.Project{},
 		&model.Activity{},
 		&model.Comment{},
+		&model.Notification{},
+		&model.NotificationPreference{},
 	)
 	if err != nil {
 		fmt.Printf("自动迁移失败: %v\n", err)

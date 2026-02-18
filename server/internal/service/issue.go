@@ -61,10 +61,11 @@ type IssueService interface {
 
 // issueService 实现 IssueService 接口
 type issueService struct {
-	issueStore        store.IssueStore
-	subscriptionStore store.IssueSubscriptionStore
-	teamMemberStore   store.TeamMemberStore
-	activityService   ActivityService
+	issueStore         store.IssueStore
+	subscriptionStore  store.IssueSubscriptionStore
+	teamMemberStore    store.TeamMemberStore
+	activityService    ActivityService
+	notificationService NotificationService
 }
 
 // NewIssueService 创建 Issue 服务实例
@@ -84,6 +85,16 @@ func NewIssueServiceWithActivity(issueStore store.IssueStore, subscriptionStore 
 		subscriptionStore: subscriptionStore,
 		teamMemberStore:   teamMemberStore,
 		activityService:   activityService,
+	}
+}
+
+// NewIssueServiceWithNotification 创建带通知功能的 Issue 服务实例
+func NewIssueServiceWithNotification(issueStore store.IssueStore, subscriptionStore store.IssueSubscriptionStore, teamMemberStore store.TeamMemberStore, notificationService NotificationService) IssueService {
+	return &issueService{
+		issueStore:         issueStore,
+		subscriptionStore:  subscriptionStore,
+		teamMemberStore:    teamMemberStore,
+		notificationService: notificationService,
 	}
 }
 
@@ -349,6 +360,31 @@ func (s *issueService) UpdateIssue(ctx context.Context, issueID string, updates 
 				}
 			}
 			s.recordActivity(ctx, issue.ID, userID, model.ActivityAssigneeChanged, payload)
+		}
+	}
+
+	// 触发通知
+	if s.notificationService != nil {
+		// 获取订阅者列表
+		subscribers, _ := s.subscriptionStore.ListSubscribers(ctx, issue.ID)
+		subscriberIDs := make([]uuid.UUID, len(subscribers))
+		for i, sub := range subscribers {
+			subscriberIDs[i] = sub.ID
+		}
+
+		// 指派通知
+		if hasAssigneeChange {
+			_ = s.notificationService.NotifyIssueAssigned(ctx, userID, issue.AssigneeID, issue.ID, issue.Title)
+		}
+
+		// 状态变更通知订阅者
+		if hasStatusChange {
+			_ = s.notificationService.NotifySubscribers(ctx, userID, subscriberIDs, model.NotificationTypeIssueStatusChanged, issue.ID, "Issue 状态已更新", fmt.Sprintf("Issue «%s» 状态已变更", issue.Title))
+		}
+
+		// 优先级变更通知订阅者
+		if hasPriorityChange {
+			_ = s.notificationService.NotifySubscribers(ctx, userID, subscriberIDs, model.NotificationTypeIssuePriorityChanged, issue.ID, "Issue 优先级已更新", fmt.Sprintf("Issue «%s» 优先级已变更", issue.Title))
 		}
 	}
 

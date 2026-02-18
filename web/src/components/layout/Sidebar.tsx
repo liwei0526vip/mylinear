@@ -8,6 +8,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useTeamStore } from '@/stores/teamStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 
 // 图标组件
 const ProjectsIcon = () => (
@@ -16,6 +17,13 @@ const ProjectsIcon = () => (
     <rect x="9" y="2" width="5" height="5" rx="1" strokeWidth="1.5" />
     <rect x="2" y="9" width="5" height="5" rx="1" strokeWidth="1.5" />
     <rect x="9" y="9" width="5" height="5" rx="1" strokeWidth="1.5" />
+  </svg>
+);
+
+const InboxIcon = () => (
+  <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor">
+    <path d="M2 4h12v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 4l3 3h6l3-3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -53,6 +61,7 @@ export function Sidebar() {
   const { user } = useAuthStore();
   const { teams, fetchTeams } = useTeamStore();
   const { projects, fetchTeamProjects } = useProjectStore();
+  const { unreadCount, fetchUnreadCount } = useNotificationStore();
 
   const [projectsExpanded, setProjectsExpanded] = useState(true);
 
@@ -62,6 +71,14 @@ export function Sidebar() {
       fetchTeams(user.workspace_id);
     }
   }, [user?.workspace_id, fetchTeams]);
+
+  // 加载未读通知数量
+  useEffect(() => {
+    fetchUnreadCount();
+    // 每 60 秒刷新一次
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
 
   // 加载当前团队的项目（用于最近项目）
   useEffect(() => {
@@ -82,6 +99,7 @@ export function Sidebar() {
   const isProjectsActive = location.pathname.includes('/projects');
   const isSettingsActive = location.pathname.startsWith('/settings');
   const isIssuesActive = location.pathname.includes('/issues') && !location.pathname.includes('/projects');
+  const isInboxActive = location.pathname === '/inbox';
 
   // 获取项目列表的路由
   const getProjectsRoute = () => {
@@ -135,6 +153,26 @@ export function Sidebar() {
           >
             <IssuesIcon />
             <span>Issues</span>
+          </Link>
+        </div>
+
+        {/* Inbox 入口 */}
+        <div className="px-2 mt-1">
+          <Link
+            to="/inbox"
+            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ${
+              isInboxActive
+                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+            }`}
+          >
+            <InboxIcon />
+            <span>收件箱</span>
+            {unreadCount > 0 && (
+              <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Link>
         </div>
 

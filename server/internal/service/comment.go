@@ -24,10 +24,11 @@ type CommentService interface {
 
 // commentService 实现 CommentService 接口
 type commentService struct {
-	commentStore      store.CommentStore
-	issueStore        store.IssueStore
-	subscriptionStore store.IssueSubscriptionStore
-	userStore         store.UserStore
+	commentStore       store.CommentStore
+	issueStore         store.IssueStore
+	subscriptionStore  store.IssueSubscriptionStore
+	userStore          store.UserStore
+	notificationService NotificationService
 }
 
 // NewCommentService 创建评论服务实例
@@ -42,6 +43,23 @@ func NewCommentService(
 		issueStore:        issueStore,
 		subscriptionStore: subscriptionStore,
 		userStore:         userStore,
+	}
+}
+
+// NewCommentServiceWithNotification 创建带通知功能的评论服务实例
+func NewCommentServiceWithNotification(
+	commentStore store.CommentStore,
+	issueStore store.IssueStore,
+	subscriptionStore store.IssueSubscriptionStore,
+	userStore store.UserStore,
+	notificationService NotificationService,
+) CommentService {
+	return &commentService{
+		commentStore:       commentStore,
+		issueStore:         issueStore,
+		subscriptionStore:  subscriptionStore,
+		userStore:          userStore,
+		notificationService: notificationService,
 	}
 }
 
@@ -65,7 +83,7 @@ func (s *commentService) CreateComment(ctx context.Context, issueID, userID uuid
 		// TODO: 添加日志记录
 	}
 
-	// 解析 @mentions 并自动订阅
+	// 解析 @mentions
 	usernames := ExtractUniqueMentions(body)
 	for _, username := range usernames {
 		// 查找被提及的用户
@@ -75,6 +93,24 @@ func (s *commentService) CreateComment(ctx context.Context, issueID, userID uuid
 		}
 		// 自动订阅被提及的用户
 		_ = s.subscriptionStore.Subscribe(ctx, issueID, user.ID)
+	}
+
+	// 触发通知
+	if s.notificationService != nil {
+		// 获取 Issue 信息
+		issue, err := s.issueStore.GetByID(ctx, issueID)
+		if err == nil {
+			// 发送 @mention 通知
+			_ = s.notificationService.NotifyIssueMentioned(ctx, userID, usernames, issueID, issue.Title)
+
+			// 获取订阅者列表并发送评论通知
+			subscribers, _ := s.subscriptionStore.ListSubscribers(ctx, issueID)
+			subscriberIDs := make([]uuid.UUID, len(subscribers))
+			for i, sub := range subscribers {
+				subscriberIDs[i] = sub.ID
+			}
+			_ = s.notificationService.NotifySubscribers(ctx, userID, subscriberIDs, model.NotificationTypeIssueCommented, issueID, "Issue 有新评论", body)
+		}
 	}
 
 	return comment, nil

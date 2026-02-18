@@ -201,6 +201,7 @@ func TestNotificationType(t *testing.T) {
 		{"Issue 提及有效", NotificationTypeIssueMentioned, true},
 		{"Issue 评论有效", NotificationTypeIssueCommented, true},
 		{"Issue 状态变更有效", NotificationTypeIssueStatusChanged, true},
+		{"Issue 优先级变更有效", NotificationTypeIssuePriorityChanged, true},
 		{"项目更新有效", NotificationTypeProjectUpdated, true},
 		{"迭代开始有效", NotificationTypeCycleStarted, true},
 		{"迭代结束有效", NotificationTypeCycleEnded, true},
